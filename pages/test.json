@@ -1,0 +1,1759 @@
+[
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "Bugis Junction",
+    "address": "200 Victoria Street, #03-29, Singapore 188021",
+    "area": "Bugis",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "Heartland Mall",
+    "address": "205 Hougang Street 21, #03-31/32/33, Singapore 530205",
+    "area": "Hougang",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Hillion Mall",
+    "address": "17 Petir Road, #B1-18/19, Singapore 678278",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "Jurong East",
+    "address": "21 Jurong Gateway Road, CPF Building (Entrance C), #03-08, Singapore 608546",
+    "area": "Jurong",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 5,
+    "outlet_name": "Plaza Singapura",
+    "address": "60A Orchard Road, #04-53, Singapore 238890",
+    "area": "Orchard",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 6,
+    "outlet_name": "Punggol Coast Mall",
+    "address": "Tower 88 Punggol Way, #12-111/112, Singapore 829913",
+    "area": "Punggol",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 7,
+    "outlet_name": "Tampines 1",
+    "address": "10 Tampines Central 1, #05-18, Singapore 529536",
+    "area": "Tampines",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "Amore Define",
+    "category": "Apparels & Accessories",
+    "outlet_index": 8,
+    "outlet_name": "Woodlands Civic Centre",
+    "address": "900 South Woodlands Drive, #06-11, Singapore 730900",
+    "area": "Woodlands",
+    "website": "https://amorefitness.com.sg/",
+    "privileges": "BLACK: 15% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers\nPASSION SILVER / PLATINUM: 20% off spa treatment for first-time customers; 10% off a la carte spa treatment for existing customers"
+  },
+  {
+    "merchant": "BHG Singapore",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "Bugis Junction",
+    "address": "200 Victoria Street, #01-100 & #02-17, Singapore 188021",
+    "area": "Bugis",
+    "website": "https://bhgsingapore.com.sg/",
+    "privileges": "$5 off with a minimum spending of $60 nett"
+  },
+  {
+    "merchant": "Barani",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "IMM",
+    "address": "2 Jurong East Street 21, #02-11A, Singapore 609601",
+    "area": "Jurong",
+    "website": "https://www.baranishoes.com/",
+    "privileges": "20% off regular-priced items"
+  },
+  {
+    "merchant": "Barani",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "One@Kent Ridge (NUH Medical Centre)",
+    "address": "1 Lower Kent Ridge Road, #03-05/06, Singapore 119082",
+    "website": "https://www.baranishoes.com/",
+    "privileges": "20% off regular-priced items"
+  },
+  {
+    "merchant": "Barani",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Parkway Parade",
+    "address": "80 Marine Parade Road, #02-61/61A, Singapore 449269",
+    "area": "Marine Parade",
+    "website": "https://www.baranishoes.com/",
+    "privileges": "20% off regular-priced items"
+  },
+  {
+    "merchant": "Barani",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "Suntec City Mall",
+    "address": "3 Temasek Boulevard, North Wing, #02-46, Singapore 038983",
+    "area": "Suntec",
+    "website": "https://www.baranishoes.com/",
+    "privileges": "20% off regular-priced items"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "AMK Hub",
+    "address": "53 Ang Mo Kio Avenue 3, #B1-07, Singapore 569933",
+    "area": "Ang Mo Kio",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "Bedok Mall",
+    "address": "311 New Upper Changi Road, #B1-21/22, Singapore 467360",
+    "area": "Bedok",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Bukit Panjang Plaza",
+    "address": "1 Jelebu Road, #02-07, Singapore 677743",
+    "area": "Bukit Panjang",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "Causeway Point",
+    "address": "1 Woodlands Square, #02-16, Singapore 738099",
+    "area": "Woodlands",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 5,
+    "outlet_name": "Century Square",
+    "address": "2 Tampines Central 5, #01-26, Singapore 529509",
+    "area": "Tampines",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 6,
+    "outlet_name": "Changi City Point",
+    "address": "5 Changi Business Park Central, #01-16, Singapore 486038",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 7,
+    "outlet_name": "City Square Mall",
+    "address": "180 Kitchener Road, #02-34, Singapore 208539",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 8,
+    "outlet_name": "Clementi",
+    "address": "Blk 449 Clementi Avenue 3, #01-251, Singapore 120449",
+    "area": "Clementi",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 9,
+    "outlet_name": "Compass One",
+    "address": "1 Sengkang Square, #01-31, Singapore 545078",
+    "area": "Sengkang",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 10,
+    "outlet_name": "Eastpoint Mall",
+    "address": "3 Simei Street 6, #02-24A, Singapore 528833",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 11,
+    "outlet_name": "IMM",
+    "address": "2 Jurong East Street 21, #01-29, Singapore 609601",
+    "area": "Jurong",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 12,
+    "outlet_name": "Jem",
+    "address": "50 Jurong Gateway Road, #03-43/44, Singapore 608549",
+    "area": "Jurong",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 13,
+    "outlet_name": "Junction 8",
+    "address": "9 Bishan Place, #02-10/09A, Singapore 579837",
+    "area": "Bishan",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 14,
+    "outlet_name": "Jurong Point",
+    "address": "1 Jurong West Central 2, #01-36/37/38/39, Singapore 648886",
+    "area": "Jurong",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 15,
+    "outlet_name": "Lot One Shoppers' Mall",
+    "address": "21 Choa Chu Kang Avenue 4, #02-14, Singapore 689812",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 16,
+    "outlet_name": "New Upper Changi",
+    "address": "Blk 208 New Upper Changi Road, #01-681, Singapore 460208",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 17,
+    "outlet_name": "NEX",
+    "address": "23 Serangoon Central, #01-71, Singapore 556083",
+    "area": "Serangoon",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 18,
+    "outlet_name": "Northpoint City",
+    "address": "1 Northpoint Drive, #01-141, Singapore 768019",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 19,
+    "outlet_name": "Parkway Parade",
+    "address": "80 Marine Parade Road, #01-65/66/67, Singapore 449269",
+    "area": "Marine Parade",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 20,
+    "outlet_name": "Pasir Ris Mall",
+    "address": "7 Pasir Ris Central, #02-35, Singapore 519612",
+    "area": "Pasir Ris",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 21,
+    "outlet_name": "Paya Lebar Quarter Mall (PLQ)",
+    "address": "10 Paya Lebar Road, #02-31, Singapore 409057",
+    "area": "Paya Lebar",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 22,
+    "outlet_name": "Peninsula Plaza",
+    "address": "111 North Bridge Road, #01-27, Singapore 179098",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 23,
+    "outlet_name": "Sun Plaza",
+    "address": "30 Sembawang Drive, #02-16/17, Singapore 757713",
+    "area": "Sembawang",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 24,
+    "outlet_name": "The Clementi Mall",
+    "address": "3155 Commonwealth Avenue West, #03-16/17, Singapore 129588",
+    "area": "Clementi",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 25,
+    "outlet_name": "The Seletar Mall",
+    "address": "33 Sengkang West Avenue, #01-22, Singapore 797653",
+    "area": "Sengkang",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 26,
+    "outlet_name": "Thomson Plaza",
+    "address": "301 Upper Thomson Road, #01-12/14/15, Singapore 574408",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 27,
+    "outlet_name": "Tiong Bahru Plaza",
+    "address": "302 Tiong Bahru Road, #02-130, Singapore 168732",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 28,
+    "outlet_name": "Toa Payoh Central",
+    "address": "Blk 178 Toa Payoh Central, #01-198/200, Singapore 310178",
+    "area": "Toa Payoh",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 29,
+    "outlet_name": "United Square",
+    "address": "101 Thomson Road, #01-66/67/71, Singapore 307591",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 30,
+    "outlet_name": "VivoCity",
+    "address": "1 Harbourfront Walk, #02-206/207, Singapore 098585",
+    "area": "HarbourFront",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 31,
+    "outlet_name": "Waterway Point",
+    "address": "83 Punggol Central, #01-46/47, Singapore 828761",
+    "area": "Punggol",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "Bata",
+    "category": "Apparels & Accessories",
+    "outlet_index": 32,
+    "outlet_name": "West Mall",
+    "address": "1 Bukit Batok Central Link, #02-28/29, Singapore 658713",
+    "area": "Bukit Batok",
+    "website": "https://www.bata.com/sg/",
+    "privileges": "$8 off with a minimum spending of $68"
+  },
+  {
+    "merchant": "City Chain",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "Bugis Junction",
+    "address": "200 Victoria Street, #01-65, Singapore 188021",
+    "area": "Bugis",
+    "website": "https://www.citychain.com.sg/",
+    "privileges": "Additional 5% off regular-priced watches with a minimum spending of $300"
+  },
+  {
+    "merchant": "City Chain",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "IMM",
+    "address": "2 Jurong East Street 21, #01-K17, Singapore 609601",
+    "area": "Jurong",
+    "website": "https://www.citychain.com.sg/",
+    "privileges": "Additional 5% off regular-priced watches with a minimum spending of $300"
+  },
+  {
+    "merchant": "City Chain",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Jem",
+    "address": "50 Jurong Gateway Road, #01-29, Singapore 608549",
+    "area": "Jurong",
+    "website": "https://www.citychain.com.sg/",
+    "privileges": "Additional 5% off regular-priced watches with a minimum spending of $300"
+  },
+  {
+    "merchant": "City Chain",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "Jurong Point Shopping Centre",
+    "address": "1 Jurong West Central 2, #01-03, Singapore 648886",
+    "area": "Jurong",
+    "website": "https://www.citychain.com.sg/",
+    "privileges": "Additional 5% off regular-priced watches with a minimum spending of $300"
+  },
+  {
+    "merchant": "City Chain",
+    "category": "Apparels & Accessories",
+    "outlet_index": 5,
+    "outlet_name": "NEX",
+    "address": "23 Serangoon Central, #01-77, Singapore 556083",
+    "area": "Serangoon",
+    "website": "https://www.citychain.com.sg/",
+    "privileges": "Additional 5% off regular-priced watches with a minimum spending of $300"
+  },
+  {
+    "merchant": "City Chain",
+    "category": "Apparels & Accessories",
+    "outlet_index": 6,
+    "outlet_name": "Northpoint City",
+    "address": "930 Yishun Avenue 2, #01-48, Singapore 769098",
+    "area": "Yishun",
+    "website": "https://www.citychain.com.sg/",
+    "privileges": "Additional 5% off regular-priced watches with a minimum spending of $300"
+  },
+  {
+    "merchant": "City Chain",
+    "category": "Apparels & Accessories",
+    "outlet_index": 7,
+    "outlet_name": "Tampines Mall",
+    "address": "4 Tampines Central 5, #01-10, Singapore 529510",
+    "area": "Tampines",
+    "website": "https://www.citychain.com.sg/",
+    "privileges": "Additional 5% off regular-priced watches with a minimum spending of $300"
+  },
+  {
+    "merchant": "Eazea",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "Causeway Point",
+    "address": "1 Woodlands Square, #03-20, Singapore 738099",
+    "area": "Woodlands",
+    "website": "https://www.eazea.sg/",
+    "privileges": "10% off regular-priced items"
+  },
+  {
+    "merchant": "Eazea",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "Jurong Point",
+    "address": "1 Jurong West Central 2, #03-39, Singapore 648886",
+    "area": "Jurong",
+    "website": "https://www.eazea.sg/",
+    "privileges": "10% off regular-priced items"
+  },
+  {
+    "merchant": "Eazea",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Tampines 1",
+    "address": "10 Tampines Central 1, #03-05, Singapore 529536",
+    "area": "Tampines",
+    "website": "https://www.eazea.sg/",
+    "privileges": "10% off regular-priced items"
+  },
+  {
+    "merchant": "Eazea",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "UB. One",
+    "address": "81 Ubi Avenue 4, #01-17, Singapore 408830",
+    "website": "https://www.eazea.sg/",
+    "privileges": "10% off regular-priced items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "AMK Hub",
+    "address": "53 Ang Mo Kio Avenue 3, #B1-59/60/61, Singapore 569933",
+    "area": "Ang Mo Kio",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "Bedok Mall",
+    "address": "311 New Upper Changi Road, #01-49/50/51, Singapore 467360",
+    "area": "Bedok",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Bugis Junction",
+    "address": "200 Victoria Street, #02-18, Singapore 188021",
+    "area": "Bugis",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "Causeway Point",
+    "address": "1 Woodlands Square, #01-22, Singapore 738099",
+    "area": "Woodlands",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 5,
+    "outlet_name": "Changi City Point",
+    "address": "5 Changi Business Park Central 1, #02-04/05, Singapore 486038",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 6,
+    "outlet_name": "Chinatown Point",
+    "address": "133 New Bridge Road, #02-05/06/07, Singapore 059413",
+    "area": "Chinatown",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 7,
+    "outlet_name": "City Square Mall",
+    "address": "180 Kitchener Road, #01-27, Singapore 208539",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 8,
+    "outlet_name": "Compass One",
+    "address": "1 Sengkang Square, #01-30, Singapore 545078",
+    "area": "Sengkang",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 9,
+    "outlet_name": "Harbourfront Centre",
+    "address": "1 Maritime Square, #02-76, Singapore 099253",
+    "area": "HarbourFront",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 10,
+    "outlet_name": "Hougang Mall",
+    "address": "90 Hougang Avenue 10, #02-04/05, Singapore 538766",
+    "area": "Hougang",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 11,
+    "outlet_name": "IMM",
+    "address": "2 Jurong East Street 21, #01-63, Singapore 609601",
+    "area": "Jurong",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 12,
+    "outlet_name": "Jem",
+    "address": "50 Jurong Gateway Road, #02-11, Singapore 608549",
+    "area": "Jurong",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 13,
+    "outlet_name": "Jurong Point",
+    "address": "1 Jurong West Central 2, #01-22/25, Singapore 648886",
+    "area": "Jurong",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 14,
+    "outlet_name": "Lot One Shoppers' Mall",
+    "address": "21 Choa Chu Kang Avenue 4, #01-15/16/17, Singapore 689812",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 15,
+    "outlet_name": "Lucky Plaza",
+    "address": "304 Orchard Road, #B1-06/07, Singapore 238863",
+    "area": "Orchard",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 16,
+    "outlet_name": "NEX",
+    "address": "23 Serangoon Central, #02-36/37, Singapore 556083",
+    "area": "Serangoon",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 17,
+    "outlet_name": "Northpoint City",
+    "address": "930 Yishun Avenue 2, #02-12/13, North Wing, Singapore 769098",
+    "area": "Yishun",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 18,
+    "outlet_name": "Pasir Ris Mall",
+    "address": "7 Pasir Ris Central, #02-27/27B, Singapore 519612",
+    "area": "Pasir Ris",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 19,
+    "outlet_name": "Suntec City Mall",
+    "address": "3 Temasek Boulevard, #02-479, Singapore 038983",
+    "area": "Suntec",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 20,
+    "outlet_name": "Tampines Mall",
+    "address": "4 Tampines Central 5, #02-04/05, Singapore 529510",
+    "area": "Tampines",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 21,
+    "outlet_name": "The Clementi Mall",
+    "address": "3155 Commonwealth Avenue West, #03-09, Singapore 129588",
+    "area": "Clementi",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 22,
+    "outlet_name": "Tiong Bahru Plaza",
+    "address": "302 Tiong Bahru Road, #02-129, Singapore 168732",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 23,
+    "outlet_name": "Toa Payoh (Interchange)",
+    "address": "Blk 530 Toa Payoh Centre Lorong 6, #01-09, Singapore 310530",
+    "area": "Toa Payoh",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 24,
+    "outlet_name": "Velocity @ Novena Square",
+    "address": "238 Thomson Road, #02-15, Singapore 307683",
+    "area": "Novena",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 25,
+    "outlet_name": "West Mall",
+    "address": "1 Bukit Batok Central Link, #01-30, Singapore 658713",
+    "area": "Bukit Batok",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "Giordano",
+    "category": "Apparels & Accessories",
+    "outlet_index": 26,
+    "outlet_name": "White Sands",
+    "address": "1 Pasir Ris Central Street 3, #01-04/05/06, Singapore 518457",
+    "area": "Pasir Ris",
+    "website": "https://www.giordano.com/sg",
+    "privileges": "BLACK: 10% off regular-priced items and 10% off discounted items; PASSION SILVER / PLATINUM: 15% off regular-priced items and 15% off discounted items"
+  },
+  {
+    "merchant": "OG",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "OG Albert; OG People's Park",
+    "address": "OG Albert: 60 Albert Street, Singapore 189969",
+    "website": "https://www.og.com.sg",
+    "privileges": "5% rebate on non-discounted merchandise"
+  },
+  {
+    "merchant": "OG",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "OG People's Park",
+    "address": "100 Upper Cross Street, Singapore 058360",
+    "website": "https://www.og.com.sg",
+    "privileges": "5% rebate on non-discounted merchandise"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "313@somerset",
+    "address": "313 Orchard Road, #01-23/24, Singapore 238895",
+    "area": "Orchard",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "Bugis Junction",
+    "address": "200 Victoria Street, #02-11, Singapore 188021",
+    "area": "Bugis",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Compass One",
+    "address": "1 Sengkang Square, #01-48, Singapore 545078",
+    "area": "Sengkang",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "Great World City",
+    "address": "1 Kim Seng Promenade, #01-149, Singapore 237994",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 5,
+    "outlet_name": "Hillion Mall",
+    "address": "17 Petir Road, #B1-48/49, Singapore 678278",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 6,
+    "outlet_name": "Hougang Mall",
+    "address": "90 Hougang Avenue 10, #01-10, Singapore 538766",
+    "area": "Hougang",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 7,
+    "outlet_name": "Jem",
+    "address": "50 Jurong Gateway Road, #03-49/50/51, Singapore 608549",
+    "area": "Jurong",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 8,
+    "outlet_name": "Jewel Changi Airport",
+    "address": "78 Airport Boulevard, #02-201, Singapore 819666",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 9,
+    "outlet_name": "Junction 8",
+    "address": "9 Bishan Place, #01-10/11, Singapore 579837",
+    "area": "Bishan",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 10,
+    "outlet_name": "Jurong Point",
+    "address": "1 Jurong West Central 2, #01-04, Singapore 648886",
+    "area": "Jurong",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 11,
+    "outlet_name": "NEX",
+    "address": "23 Serangoon Central, #01-07/08, Singapore 556083",
+    "area": "Serangoon",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 12,
+    "outlet_name": "Northpoint City",
+    "address": "930 Yishun Avenue 2, #01-122/123/132, Singapore 768019",
+    "area": "Yishun",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 13,
+    "outlet_name": "Orchard Paragon",
+    "address": "290 Orchard Road, #04-33, Singapore 238859",
+    "area": "Orchard",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 14,
+    "outlet_name": "Parkway Parade",
+    "address": "80 Marine Parade Road, #02-42/43, Singapore 449269",
+    "area": "Marine Parade",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 15,
+    "outlet_name": "Punggol Coast Mall",
+    "address": "88 Punggol Way, #01-147, Singapore 829913",
+    "area": "Punggol",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 16,
+    "outlet_name": "Skechers Foamies, SingPost Centre",
+    "address": "10 Eunos Road 8, #01-113, Singapore 408600",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 17,
+    "outlet_name": "Suntec City Mall",
+    "address": "3 Temasek Boulevard, #01-404/405, Singapore 038983",
+    "area": "Suntec",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 18,
+    "outlet_name": "Tampines 1",
+    "address": "10 Tampines Central 1, #02-36, Singapore 529536",
+    "area": "Tampines",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 19,
+    "outlet_name": "Velocity @ Novena Square",
+    "address": "238 Thomson Road, #01-13/14, Singapore 307683",
+    "area": "Novena",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 20,
+    "outlet_name": "VivoCity",
+    "address": "1 Harbourfront Walk, #02-25, Singapore 098585",
+    "area": "HarbourFront",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 21,
+    "outlet_name": "White Sands",
+    "address": "1 Pasir Ris Central Street 3, #01-35/36/37/38, Singapore 518457",
+    "area": "Pasir Ris",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Skechers",
+    "category": "Apparels & Accessories",
+    "outlet_index": 22,
+    "outlet_name": "Wisma Atria",
+    "address": "435 Orchard Road, #B1-14/15/16, Singapore 238877",
+    "area": "Orchard",
+    "website": "www.skechers.com.sg",
+    "privileges": "10% off regular-priced footwear & apparel"
+  },
+  {
+    "merchant": "Sunday Staples",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "313@somerset",
+    "address": "313 Orchard Road, #04-25, Singapore 238895",
+    "area": "Orchard",
+    "website": "https://www.sundaystaples.com/",
+    "privileges": "BLACK: $6 off regular-priced items with minimum spending of $60; PASSION SILVER / PLATINUM: $9 off regular-priced items with minimum spending of $60"
+  },
+  {
+    "merchant": "Sunday Staples",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "Capitol Piazza",
+    "address": "13 Stamford Road, #B2-22, Singapore 178905",
+    "website": "https://www.sundaystaples.com/",
+    "privileges": "BLACK: $6 off regular-priced items with minimum spending of $60; PASSION SILVER / PLATINUM: $9 off regular-priced items with minimum spending of $60"
+  },
+  {
+    "merchant": "Sunday Staples",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Jem",
+    "address": "50 Jurong Gateway Road, #03-45, Singapore 608549",
+    "area": "Jurong",
+    "website": "https://www.sundaystaples.com/",
+    "privileges": "BLACK: $6 off regular-priced items with minimum spending of $60; PASSION SILVER / PLATINUM: $9 off regular-priced items with minimum spending of $60"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 1,
+    "outlet_name": "Bedok Mall",
+    "address": "311 New Upper Changi Road, #01-57-59, Singapore 467360",
+    "area": "Bedok",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 2,
+    "outlet_name": "Bugis Junction",
+    "address": "200 Victoria Street, #02-18E, Singapore 188021",
+    "area": "Bugis",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 3,
+    "outlet_name": "Changi Airport Terminal 3",
+    "address": "65 Airport Boulevard, #B2-08/09, Singapore 819663",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 4,
+    "outlet_name": "Northpoint City",
+    "address": "930 Yishun Avenue 2, #01-20, Singapore 769098",
+    "area": "Yishun",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 5,
+    "outlet_name": "Parkway Parade",
+    "address": "80 Marine Parade Road, #01-31, Singapore 449269",
+    "area": "Marine Parade",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 6,
+    "outlet_name": "Paya Lebar Quarter Mall (PLQ)",
+    "address": "10 Paya Lebar Road, #01-33, Singapore 409057",
+    "area": "Paya Lebar",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 7,
+    "outlet_name": "Tampines Mall",
+    "address": "4 Tampines Central 5, #02-09, Singapore 529510",
+    "area": "Tampines",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 8,
+    "outlet_name": "The Clementi Mall",
+    "address": "3155 Commonwealth Avenue West, #04-35/36, Singapore 129588",
+    "area": "Clementi",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 9,
+    "outlet_name": "Waterway Point",
+    "address": "83 Punggol Central, #01-75, Singapore 828761",
+    "area": "Punggol",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "The Wallet Shop",
+    "category": "Apparels & Accessories",
+    "outlet_index": 10,
+    "outlet_name": "Westgate",
+    "address": "3 Gateway Drive, #02-33, Singapore 608532",
+    "area": "Westgate",
+    "website": "https://thewalletshop.com/",
+    "privileges": "10% off regular-priced items with a minimum spending of $100"
+  },
+  {
+    "merchant": "Lifespa",
+    "category": "Beauty & Spa",
+    "outlet_index": 1,
+    "outlet_name": "Carlton Hotel",
+    "address": "76 Bras Basah Road, Level 4, Executive Wing, Singapore 189558",
+    "website": "https://lifespa.com.sg/contact-us/",
+    "privileges": "One of these spa treats at $35 nett: 60-min Gua Sha Lifting / Pearl Brighten Facial / Ginger Oil Massage / Collagen Firming Body Massage; other add-on treatment offers available"
+  },
+  {
+    "merchant": "Lifespa",
+    "category": "Beauty & Spa",
+    "outlet_index": 2,
+    "outlet_name": "Carlton Hotel",
+    "address": "76 Bras Basah Road, Level 5, Premier Wing, Singapore 189558",
+    "website": "https://lifespa.com.sg/contact-us/",
+    "privileges": "One of these spa treats at $35 nett: 60-min Gua Sha Lifting / Pearl Brighten Facial / Ginger Oil Massage / Collagen Firming Body Massage; other add-on treatment offers available"
+  },
+  {
+    "merchant": "Lifespa",
+    "category": "Beauty & Spa",
+    "outlet_index": 3,
+    "outlet_name": "Orchard Gateway @ Emerald",
+    "address": "218 Orchard Road, Level 11, Singapore 238851",
+    "area": "Orchard",
+    "website": "https://lifespa.com.sg/contact-us/",
+    "privileges": "One of these spa treats at $35 nett: 60-min Gua Sha Lifting / Pearl Brighten Facial / Ginger Oil Massage / Collagen Firming Body Massage; other add-on treatment offers available"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 1,
+    "outlet_name": "Aperia Mall",
+    "address": "12 Kallang Avenue, #01-71, Singapore 339511",
+    "area": "Kallang",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 2,
+    "outlet_name": "Bugis Junction",
+    "address": "200 Victoria Street, #M01-K1, Singapore 188021",
+    "area": "Bugis",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 3,
+    "outlet_name": "City Square Mall",
+    "address": "180 Kitchener Road, #01-12, Singapore 208539",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 4,
+    "outlet_name": "iMall",
+    "address": "5 Marine Parade Central, #02-07, Singapore 449410",
+    "area": "Marine Parade",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 5,
+    "outlet_name": "Junction 8",
+    "address": "9 Bishan Place, #02-30, Singapore 579837",
+    "area": "Bishan",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 6,
+    "outlet_name": "Northpoint City",
+    "address": "1 Northpoint Drive, #01-127, Singapore 768019",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 7,
+    "outlet_name": "Tampines MRT",
+    "address": "20 Tampines Central 1, #01-19, Singapore 529538",
+    "area": "Tampines",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "Beutea",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 8,
+    "outlet_name": "Tiong Bahru Plaza",
+    "address": "302 Tiong Bahru Road, #01-158, Singapore 168732",
+    "website": "https://www.beutea.world/index.html",
+    "privileges": "BLACK: 5% off total bill; PASSION SILVER / PLATINUM: 5% off total bill with 1 free topping"
+  },
+  {
+    "merchant": "DOPA",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 1,
+    "outlet_name": "South Bridge Road",
+    "address": "29 South Bridge Road, #01-01, Singapore 058665",
+    "website": "https://www.dopadopacreamery.com/",
+    "privileges": "10% off with no minimum spending"
+  },
+  {
+    "merchant": "DOPA",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 2,
+    "outlet_name": "Tanjong Pagar Plaza",
+    "address": "7 Tanjong Pagar Plaza, #01-107, Singapore 081007",
+    "website": "https://www.dopadopacreamery.com/",
+    "privileges": "10% off with no minimum spending"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 1,
+    "outlet_name": "AMK Hub",
+    "address": "Ang Mo Kio Avenue 3, #01-32A, Singapore 569933",
+    "area": "Ang Mo Kio",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 2,
+    "outlet_name": "Causeway Point",
+    "address": "1 Woodlands Square, #B1-K20, Singapore 738099",
+    "area": "Woodlands",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 3,
+    "outlet_name": "Changi Airport Terminal 3 (Departure Hall Public Area)",
+    "address": "65 Airport Boulevard, #02-97, Singapore 819663",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 4,
+    "outlet_name": "Cineleisure",
+    "address": "8 Grange Road, #01-08A, Singapore 239695",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 5,
+    "outlet_name": "Compass One",
+    "address": "1 Sengkang Square, #B1-19, Singapore 545078",
+    "area": "Sengkang",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 6,
+    "outlet_name": "Jem",
+    "address": "50 Jurong Gateway Road, #B1-51, Singapore 608549",
+    "area": "Jurong",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 7,
+    "outlet_name": "Jurong Point",
+    "address": "1 Jurong West Central 2, #B1-01, Singapore 648886",
+    "area": "Jurong",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 8,
+    "outlet_name": "NEX",
+    "address": "23 Serangoon Central, #03-K5/K6, Singapore 556083",
+    "area": "Serangoon",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 9,
+    "outlet_name": "Northpoint City",
+    "address": "930 Yishun Avenue 2, #B1-16, Singapore 769098",
+    "area": "Yishun",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 10,
+    "outlet_name": "Parkway Parade",
+    "address": "80 Marine Parade Road, #B1-61, Singapore 449269",
+    "area": "Marine Parade",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 11,
+    "outlet_name": "Plaza Singapura",
+    "address": "68 Orchard Road Plaza, #B2-30, Singapore 238839",
+    "area": "Orchard",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 12,
+    "outlet_name": "Tampines Mall",
+    "address": "4 Tampines Central 5, #B1-K15, Singapore 529510",
+    "area": "Tampines",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 13,
+    "outlet_name": "Toa Payoh HDB Hub",
+    "address": "500 Toa Payoh Lor 6, #02-33, Singapore 310500",
+    "area": "Toa Payoh",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 14,
+    "outlet_name": "Waterway Point",
+    "address": "83 Punggol Central, #B2-K11, Singapore 828761",
+    "area": "Punggol",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 15,
+    "outlet_name": "White Sands",
+    "address": "1 Pasir Ris Central Street 3, #01-40, Singapore 518457",
+    "area": "Pasir Ris",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "Famous Amos",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 16,
+    "outlet_name": "Wisma Atria",
+    "address": "435 Orchard Road, #B1-43, Singapore 238877",
+    "area": "Orchard",
+    "website": "http://dunkindonuts.com.sg/",
+    "privileges": "10% off with a minimum spending of $10"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 1,
+    "outlet_name": "313@somerset",
+    "address": "313 Orchard Road, #B3-08, Singapore 238895",
+    "area": "Orchard",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 2,
+    "outlet_name": "AMK Hub (Playground)",
+    "address": "53 Ang Mo Kio Avenue 3, #B1-51B, Singapore 569933",
+    "area": "Ang Mo Kio",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 3,
+    "outlet_name": "Bedok Mall",
+    "address": "311 New Upper Changi Road, #01-09, Singapore 467360",
+    "area": "Bedok",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 4,
+    "outlet_name": "Bukit Panjang Plaza",
+    "address": "1 Jelebu Road, #01-17, Singapore 677743",
+    "area": "Bukit Panjang",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 5,
+    "outlet_name": "Buona Vista MRT Station",
+    "address": "100 North Buona Vista Road, #01-08, Singapore 139345",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 6,
+    "outlet_name": "Causeway Point",
+    "address": "1 Woodlands Square, #B1-K30, Singapore 738099",
+    "area": "Woodlands",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 7,
+    "outlet_name": "City Square Mall",
+    "address": "180 Kitchener Road, #B2-K10, Singapore 208539",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 8,
+    "outlet_name": "Depot Heights Shopping Centre",
+    "address": "108 Depot Road, #01-03, Singapore 100108",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 9,
+    "outlet_name": "Hougang Mall",
+    "address": "90 Hougang Avenue 10, #01-25, Singapore 538766",
+    "area": "Hougang",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 10,
+    "outlet_name": "Jurong Point",
+    "address": "1 Jurong West Central 2, #B1-36A, Singapore 648886",
+    "area": "Jurong",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 11,
+    "outlet_name": "Marina Bay Link Mall",
+    "address": "8A Marina Boulevard, #B2-43, Singapore 018984",
+    "area": "Marina",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 12,
+    "outlet_name": "NEX",
+    "address": "23 Serangoon Central, #04-17, Singapore 556083",
+    "area": "Serangoon",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 13,
+    "outlet_name": "Northpoint City",
+    "address": "1 Northpoint Drive, South Wing, #01-154, Singapore 768019",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 14,
+    "outlet_name": "Northshore Plaza II",
+    "address": "418 Northshore Drive, #03-02, Singapore 820418",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 15,
+    "outlet_name": "Paya Lebar Quarter (PLQ Mall)",
+    "address": "10 Paya Lebar Road, #B2-K5, Singapore 409057",
+    "area": "Paya Lebar",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 16,
+    "outlet_name": "Punggol Digital District (Playground)",
+    "address": "88 Punggol Way, #02-127, Singapore 829913",
+    "area": "Punggol",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 17,
+    "outlet_name": "Sengkang Grand Mall",
+    "address": "70 Compassvale Bow, #01-67, Singapore 544692",
+    "area": "Sengkang",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 18,
+    "outlet_name": "Suntec City Mall (Playground)",
+    "address": "3 Temasek Boulevard, North Tower, #B1-151, Singapore 038983",
+    "area": "Suntec",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 19,
+    "outlet_name": "Tampines 1",
+    "address": "10 Tampines Central 1, #01-59, Singapore 529536",
+    "area": "Tampines",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 20,
+    "outlet_name": "The Clementi Mall",
+    "address": "3155 Commonwealth Avenue West, #04-K4, Singapore 129588",
+    "area": "Clementi",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 21,
+    "outlet_name": "The Seletar Mall (Playground)",
+    "address": "33 Sengkang West Avenue, #03-K3, Singapore 797653",
+    "area": "Sengkang",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 22,
+    "outlet_name": "Tiong Bahru Plaza",
+    "address": "302 Tiong Bahru Road, #01-154, Singapore 168732",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 23,
+    "outlet_name": "Toa Payoh Central",
+    "address": "190 Lorong 6 Toa Payoh, #01-564B, Singapore 310190",
+    "area": "Toa Payoh",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 24,
+    "outlet_name": "Velocity @ Novena Square",
+    "address": "238 Thomson Road, #02-52, Singapore 307683",
+    "area": "Novena",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 25,
+    "outlet_name": "VivoCity",
+    "address": "1 Harbourfront Walk, #02-118, Singapore 098585",
+    "area": "HarbourFront",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 26,
+    "outlet_name": "Waterway Point",
+    "address": "83 Punggol Central, #B1-K6, Singapore 828761",
+    "area": "Punggol",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 27,
+    "outlet_name": "Westgate",
+    "address": "3 Gateway Drive, #01-K1, Singapore 608532",
+    "area": "Westgate",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "PlayMade",
+    "category": "Confectionery & Snacks",
+    "outlet_index": 28,
+    "outlet_name": "Wisteria Mall",
+    "address": "598 Yishun Ring Road, #01-24, Singapore 768698",
+    "area": "Yishun",
+    "website": "https://www.playmade.com/",
+    "privileges": "5% off total bill (Promo code: PMXPM5)"
+  },
+  {
+    "merchant": "4FINGERS CRISPY CHICKEN",
+    "category": "Food, Wine & Dine (Asian)",
+    "outlet_index": 1,
+    "outlet_name": "Balestier",
+    "address": "601 Balestier Road, Singapore 329903",
+    "website": "https://www.4fingers.com.sg/",
+    "privileges": "10% off regular-priced items with a minimum spending of $20"
+  },
+  {
+    "merchant": "4FINGERS CRISPY CHICKEN",
+    "category": "Food, Wine & Dine (Asian)",
+    "outlet_index": 2,
+    "outlet_name": "Bugis",
+    "address": "159 Rochor Road, Singapore 188434",
+    "area": "Rochor",
+    "website": "https://www.4fingers.com.sg/",
+    "privileges": "10% off regular-priced items with a minimum spending of $20"
+  },
+  {
+    "merchant": "4FINGERS CRISPY CHICKEN",
+    "category": "Food, Wine & Dine (Asian)",
+    "outlet_index": 3,
+    "outlet_name": "Causeway Point",
+    "address": "1 Woodlands Square, #01-38/39, Singapore 738099",
+    "area": "Woodlands",
+    "website": "https://www.4fingers.com.sg/",
+    "privileges": "10% off regular-priced items with a minimum spending of $20"
+  },
+  {
+    "merchant": "4FINGERS CRISPY CHICKEN",
+    "category": "Food, Wine & Dine (Asian)",
+    "outlet_index": 4,
+    "outlet_name": "Hillion Mall",
+    "address": "17 Petir Road, #B1-65A, Singapore 678278",
+    "website": "https://www.4fingers.com.sg/",
+    "privileges": "10% off regular-priced items with a minimum spending of $20"
+  }]
