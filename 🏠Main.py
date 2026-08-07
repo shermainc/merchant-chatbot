@@ -20,7 +20,7 @@ st.write("---") # Visual divider line
     # Feature 1: RAG Chat
     # Uses a material icon (chat) right inside the subheader
 st.subheader(":material/chat: Conversational AI using RAG", divider="gray")
-st.write("Chat naturally with **GPT-4o-mini**. The answer is based on our Merchant testing database")
+st.write("Chat naturally with **GPT-4o-mini**. The answer is based on our test Merchant database with 17 merchants for this trial. You may ask the Chatbot to list out all the merchants")
 
     # Feature 2: Framework
 st.subheader(":material/layers: UI Framework", divider="gray")
