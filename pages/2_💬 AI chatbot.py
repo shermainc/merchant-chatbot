@@ -152,7 +152,7 @@ Data Context:
 # STREAMLIT UI IMPLEMENTATION (NATIVE CHAT VIEWPORT)
 # ---------------------------------------------------------
 st.title("🛍️ Merchant Perks & Deals Chatbot")
-st.write("Query information regarding merchant details, areas, categories, and privilege programs interactively.")
+st.write("Query information regarding merchant deals, locations or categories interactively.")
 
 if not merchant_data:
     st.error(f"⚠️ Warning: Database is empty or '{JSON_FILE_PATH}' was not found.")
@@ -170,7 +170,7 @@ else:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    if user_prompt := st.chat_input("Ask me questions e.g. 'List down all merchants. Which merchants are in Orchard? Any snack deals in Central areas? Any Beautea outlets in the East')"):
+    if user_prompt := st.chat_input("Ask me questions e.g. List down all merchants. Which merchants are in Orchard? Any snack deals in Central areas? Any Beautea outlets in the East"):
         
         with st.chat_message("user"):
             st.write(user_prompt)
