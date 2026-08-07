@@ -33,8 +33,8 @@ with tab1:
     **Description**: Covers sequential multi-turn conversational inquiries regarding known specific items, broad database lists, and continuing questions relying heavily on rolling memory.
     """)
     
-    # Render an end-to-end visual flowchart for Chat with Info
-    st.mermaid("""
+    # Corrected function to st.mermaid_chart
+    st.mermaid_chart("""
     graph TD
         A([User Submits Prompt]) --> B[Memory Cache Check: load_and_process_database]
         B --> C[Stage 1: pipeline_verify_merchant]
@@ -57,8 +57,8 @@ with tab2:
     **Description**: Triggered when users use implicit filtering parameters, regional lookups (e.g., *"Orchard"*), or colloquial semantic shorthand needing category fallback transformations.
     """)
     
-    # Render an end-to-end visual flowchart for Intelligent Search
-    st.mermaid("""
+    # Corrected function to st.mermaid_chart
+    st.mermaid_chart("""
     graph TD
         A([User Submits Broad Query]) --> B[Stage 1: Sanitize Inputs & Extract Sub-Entities]
         B --> C{Direct Merchant Match?}
@@ -88,4 +88,3 @@ st.markdown("""
 * **Hallucination Suppression**: Restricts the generative capabilities of the model by forcing a complete block layout stop if queried components do not exist inside the current data array layer.
 * **Deterministic Layout Control**: Replaces fragile non-deterministic string parsing with robust structural JSON payload validations to route program state switches.
 """)
-
