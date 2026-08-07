@@ -45,7 +45,7 @@ merchant_data, VALID_MERCHANTS, VALID_CATEGORIES = load_and_process_database(JSO
 
 
 # ---------------------------------------------------------
-# STAGE 1: GUARDRAIL & ENTRACTOR (Prompt Chaining)
+# STAGE 1: GUARDRAIL & EXTRACTOR (Prompt Chaining)
 # ---------------------------------------------------------
 def pipeline_verify_merchant(user_input: str) -> dict:
     clean_input = re.sub(r'[^\w\s\s\.\:\/\-\?\!]', '', user_input)
@@ -69,7 +69,6 @@ List of valid database merchants to cross-reference: {json.dumps(VALID_MERCHANTS
     
     raw_response = llm.get_completion(combined_prompt, json_output=True)
     
-    # Check if raw_response is already returned as a dictionary by the helper
     if isinstance(raw_response, dict):
         return raw_response
         
@@ -125,7 +124,6 @@ def pipeline_execute_rag(user_input: str, history: list, matched_merchant: str =
         filtered_records = [row for row in merchant_data if row.get("merchant") == matched_merchant]
         context_string = json.dumps(filtered_records, indent=2)
     else:
-        # Default fallback for broad/area/general lists queries
         context_string = json.dumps(merchant_data, indent=2)
     
     system_instruction = f"""You are an accurate, honest helper assistant retrieving deals from a local file array.
@@ -141,9 +139,8 @@ STRICT IMPLEMENTATION RULES:
 Data Context:
 {context_string}"""
 
-    # Compile the ongoing chat conversation history log for structural context
     history_context = ""
-    for msg in history[-5:]: # Feed trailing five message elements to protect token budget limits
+    for msg in history[-5:]:
         role_label = "User" if msg["role"] == "user" else "Assistant"
         history_context += f"{role_label}: {msg['content']}\n"
 
@@ -160,26 +157,21 @@ st.write("Query information regarding merchant details, areas, categories, and p
 if not merchant_data:
     st.error(f"⚠️ Warning: Database is empty or '{JSON_FILE_PATH}' was not found.")
 else:
-    # Optional Sidebar item to wipe session state clean and start over
     if st.sidebar.button("🧹 Clear Chat History"):
         st.session_state.messages = []
         st.rerun()
 
-    # Initialize message list tracker array inside session state if empty
     if "messages" not in st.session_state:
         st.session_state.messages = [
-            {"role": "assistant", "content": "Hello! Ask me any questions about our database merchants, categories or target operating locations."}
+            {"role": "assistant", "content": "Hello! Ask me any questions about our database merchants, categories or locations."}
         ]
 
-    # Re-draw the past messages recorded across prior processing executions
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    # Collect live inputs using Streamlit's native input chat element wrapper
-    if user_prompt := st.chat_input("Ask something (e.g. 'What are the deals for Amore Define?' or 'List merchants in Bugis')"):
+    if user_prompt := st.chat_input("Ask something (e.g. 'What are the deals for Amore Define?')"):
         
-        # Display the human user message on screen immediately and cache to state arrays
         with st.chat_message("user"):
             st.write(user_prompt)
         st.session_state.messages.append({"role": "user", "content": user_prompt})
@@ -204,20 +196,41 @@ else:
                             matched_name = name
                             break
                 
-                # Identify if the user text targets specific operational areas
                 known_areas = list(set([str(row.get("area")).lower() for row in merchant_data if row.get("area")]))
                 is_asking_about_area = any(area in user_prompt.lower() for area in known_areas) or "area" in user_prompt.lower() or "location" in user_prompt.lower()
                 
-                # Check for alternative category maps
                 mapped_category = map_user_query_to_category(user_prompt)
-
-# ---------------------------------------------------------# ROUTING LOGIC EXECUTION & RAG PROCESSING# ---------------------------------------------------------
-
-if matched_name:response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,matched_merchant=matched_name)
-    elif mapped_category != "None":response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,category_filter=mapped_category)
-        elif is_asking_about_area:response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,is_broad_search=True)
-            else:response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,is_broad_search=True)
                 
-# Write response back to user inside an assistant chat widget and append to state
-with st.chat_message("assistant"):
-    st.write(response_text)st.session_state.messages.append({"role": "assistant", "content": response_text})
+                # ---------------------------------------------------------
+                # ROUTING LOGIC EXECUTION & RAG PROCESSING
+                # ---------------------------------------------------------
+                if matched_name:
+                    response_text = pipeline_execute_rag(
+                        user_prompt, 
+                        history=st.session_state.messages, 
+                        matched_merchant=matched_name
+                    )
+                elif mapped_category != "None":
+                    response_text = pipeline_execute_rag(
+                        user_prompt, 
+                        history=st.session_state.messages, 
+                        category_filter=mapped_category
+                    )
+                elif is_asking_about_area:
+                    response_text = pipeline_execute_rag(
+                        user_prompt, 
+                        history=st.session_state.messages, 
+                        is_broad_search=True
+                    )
+                else:
+                    response_text = pipeline_execute_rag(
+                        user_prompt, 
+                        history=st.session_state.messages, 
+                        is_broad_search=True
+                    )
+                
+                # Render response back inside chat layout and save to ongoing session state
+                with st.chat_message("assistant"):
+                    st.write(response_text)
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
+
