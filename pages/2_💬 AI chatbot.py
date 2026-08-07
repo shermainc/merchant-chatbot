@@ -45,7 +45,7 @@ merchant_data, VALID_MERCHANTS, VALID_CATEGORIES = load_and_process_database(JSO
 
 
 # ---------------------------------------------------------
-# STAGE 1: GUARDRAIL & EXTRACTOR (Prompt Chaining)
+# STAGE 1: GUARDRAIL & ENTRACTOR (Prompt Chaining)
 # ---------------------------------------------------------
 def pipeline_verify_merchant(user_input: str) -> dict:
     clean_input = re.sub(r'[^\w\s\s\.\:\/\-\?\!]', '', user_input)
@@ -69,6 +69,10 @@ List of valid database merchants to cross-reference: {json.dumps(VALID_MERCHANTS
     
     raw_response = llm.get_completion(combined_prompt, json_output=True)
     
+    # Check if raw_response is already returned as a dictionary by the helper
+    if isinstance(raw_response, dict):
+        return raw_response
+        
     try:
         return json.loads(raw_response)
     except Exception:
@@ -107,18 +111,22 @@ Official allowed list of categories:
 
 
 # ---------------------------------------------------------
-# STAGE 2: SEMANTIC DATA LOOKUP (Prompt Chaining)
+# STAGE 2: SEMANTIC DATA LOOKUP (Prompt Chaining with History)
 # ---------------------------------------------------------
-def pipeline_execute_rag(user_input: str, matched_merchant: str = None, is_broad_search: bool = False) -> str:
+def pipeline_execute_rag(user_input: str, history: list, matched_merchant: str = None, category_filter: str = None, is_broad_search: bool = False) -> str:
     """
     Second link in the prompt chain. Queries filtered database assets 
-    and handles missing records explicitly without hallucinating details.
+    and handles conversational history continuity.
     """
-    if is_broad_search:
-        context_string = json.dumps(merchant_data, indent=2)
-    else:
+    if category_filter and category_filter != "None":
+        filtered_records = [row for row in merchant_data if row.get("category") == category_filter]
+        context_string = json.dumps(filtered_records, indent=2)
+    elif matched_merchant:
         filtered_records = [row for row in merchant_data if row.get("merchant") == matched_merchant]
         context_string = json.dumps(filtered_records, indent=2)
+    else:
+        # Default fallback for broad/area/general lists queries
+        context_string = json.dumps(merchant_data, indent=2)
     
     system_instruction = f"""You are an accurate, honest helper assistant retrieving deals from a local file array.
 You must answer the user's query using ONLY the provided verified merchant records below.
@@ -133,74 +141,83 @@ STRICT IMPLEMENTATION RULES:
 Data Context:
 {context_string}"""
 
-    combined_prompt = f"{system_instruction}\n\nUser Question:\n{user_input}"
+    # Compile the ongoing chat conversation history log for structural context
+    history_context = ""
+    for msg in history[-5:]: # Feed trailing five message elements to protect token budget limits
+        role_label = "User" if msg["role"] == "user" else "Assistant"
+        history_context += f"{role_label}: {msg['content']}\n"
+
+    combined_prompt = f"{system_instruction}\n\nChat History Log:\n{history_context}\nUser Question:\n{user_input}"
     return llm.get_completion(combined_prompt)
 
 
 # ---------------------------------------------------------
-# STREAMLIT UI IMPLEMENTATION
+# STREAMLIT UI IMPLEMENTATION (NATIVE CHAT VIEWPORT)
 # ---------------------------------------------------------
 st.title("🛍️ Merchant Perks & Deals Chatbot")
-st.write("Query information regarding merchant details, areas, categories, and privilege programs safely.")
+st.write("Query information regarding merchant details, areas, categories, and privilege programs interactively.")
 
 if not merchant_data:
     st.error(f"⚠️ Warning: Database is empty or '{JSON_FILE_PATH}' was not found.")
 else:
-    form = st.form(key="form")
-    form.subheader("Ask about a Merchant, Area, or Category")
+    # Optional Sidebar item to wipe session state clean and start over
+    if st.sidebar.button("🧹 Clear Chat History"):
+        st.session_state.messages = []
+        st.rerun()
 
-    user_prompt = form.text_area("Enter your question here (e.g., 'What are the deals for Skechers? Are there any central outlets?' or 'Which merchants are in Orchard?')", height=150)
+    # Initialize message list tracker array inside session state if empty
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hello! Ask me any questions about our database merchants, categories or target operating locations."}
+        ]
 
-    if form.form_submit_button("Submit Query"):
-        if not user_prompt.strip():
-            st.warning("Please enter a valid prompt.")
-        else:
-            st.toast(f"User Input Submitted - {user_prompt}")
-            print(f"User Input is {user_prompt}")
+    # Re-draw the past messages recorded across prior processing executions
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    # Collect live inputs using Streamlit's native input chat element wrapper
+    if user_prompt := st.chat_input("Ask something (e.g. 'What are the deals for Amore Define?' or 'List merchants in Bugis')"):
+        
+        # Display the human user message on screen immediately and cache to state arrays
+        with st.chat_message("user"):
+            st.write(user_prompt)
+        st.session_state.messages.append({"role": "user", "content": user_prompt})
+        
+        with st.spinner("Processing through secure data layers..."):
+            security_evaluation = pipeline_verify_merchant(user_prompt)
             
-            with st.spinner("Processing through secure data layers..."):
-                security_evaluation = pipeline_verify_merchant(user_prompt)
+            if not security_evaluation.get("is_safe", True):
+                error_alert = "🚨 Security Warning: Unsupported input pattern detected."
+                with st.chat_message("assistant"):
+                    st.error(error_alert)
+                st.session_state.messages.append({"role": "assistant", "content": error_alert})
+                print(f"[SECURITY] Blocked suspected prompt injection: {user_prompt}")
                 
-                if not security_evaluation.get("is_safe", True):
-                    st.error("🚨 Security Warning: Unsupported input pattern detected.")
-                    print(f"[SECURITY] Blocked suspected prompt injection: {user_prompt}")
-                    
-                else:
-                    extracted = security_evaluation.get("extracted_merchant")
-                    matched_name = None
-                    
-                    if extracted:
-                        for name in VALID_MERCHANTS:
-                            if name.lower() in extracted.lower() or extracted.lower() in name.lower():
-                                matched_name = name
-                                break
-                    
-                    # Check if the user is asking a location-based question
-                    known_areas = list(set([str(row.get("area")).lower() for row in merchant_data if row.get("area")]))
-                    is_asking_about_area = any(area in user_prompt.lower() for area in known_areas) or "area" in user_prompt.lower() or "location" in user_prompt.lower()
+            else:
+                extracted = security_evaluation.get("extracted_merchant")
+                matched_name = None
+                
+                if extracted and extracted != "null":
+                    for name in VALID_MERCHANTS:
+                        if name.lower() in extracted.lower() or extracted.lower() in name.lower():
+                            matched_name = name
+                            break
+                
+                # Identify if the user text targets specific operational areas
+                known_areas = list(set([str(row.get("area")).lower() for row in merchant_data if row.get("area")]))
+                is_asking_about_area = any(area in user_prompt.lower() for area in known_areas) or "area" in user_prompt.lower() or "location" in user_prompt.lower()
+                
+                # Check for alternative category maps
+                mapped_category = map_user_query_to_category(user_prompt)
 
-                    # Check if user is asking about categories using the semantic mapper
-                    mapped_category = map_user_query_to_category(user_prompt)
-                    is_asking_about_category = mapped_category != "None"
+# ---------------------------------------------------------# ROUTING LOGIC EXECUTION & RAG PROCESSING# ---------------------------------------------------------
 
-                    if is_asking_about_area:
-                        response = pipeline_execute_rag(user_prompt, is_broad_search=True)
-                        st.subheader("Response")
-                        st.write(response)
-                        print(f"Processed Location-Based Query")
-
-                    elif is_asking_about_category:
-                        enriched_prompt = f"{user_prompt} (Context Note: The user's requested category closely maps to the official category '{mapped_category}')"
-                        response = pipeline_execute_rag(enriched_prompt, is_broad_search=True)
-                        st.subheader("Response")
-                        st.write(response)
-                        print(f"Processed Category Query for category: {mapped_category}")
-
-                    elif not matched_name:
-                        st.info("They are not our merchants. We do not have deals from this merchant.")
-                    
-                    else:
-                        response = pipeline_execute_rag(user_prompt, matched_merchant=matched_name, is_broad_search=False)
-                        st.subheader("Response")
-                        st.write(response)
-                        print(f"Processed Query for {matched_name}")
+if matched_name:response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,matched_merchant=matched_name)
+    elif mapped_category != "None":response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,category_filter=mapped_category)
+        elif is_asking_about_area:response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,is_broad_search=True)
+            else:response_text = pipeline_execute_rag(user_prompt,history=st.session_state.messages,is_broad_search=True)
+                
+# Write response back to user inside an assistant chat widget and append to state
+with st.chat_message("assistant"):
+    st.write(response_text)st.session_state.messages.append({"role": "assistant", "content": response_text})
