@@ -163,7 +163,7 @@ else:
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
-            {"role": "assistant", "content": "Hello! Ask me any questions about our database merchants, categories or locations."}
+            {"role": "assistant", "content": "Hello! Ask me any questions about our database merchants, categories or locations. These are some prompts: List down all merchants. Which merchants are in Orchard? Any snack deals in Central areas? Any Beautea outlets in the East"}
         ]
 
     for message in st.session_state.messages:
