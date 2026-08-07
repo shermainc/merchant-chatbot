@@ -94,7 +94,7 @@ Analyze the user's input request and determine if they are looking for a specifi
 
 If they are looking for a category, select the most conceptually similar category from the official allowed list.
 Examples:
-- "bubble tea", "bbt", "cafe", "food", "fnb", "f n b", "beverage" -> should map to "Food & Beverage" if it exists, or whatever is closest.
+- "bubble tea", "bbt", "cafe", "food", "fnb", "f n b", "beverage", "snacks", "confectionery" -> should map to "Food & Beverage" if it exists, or whatever is closest.
 - "clothes", "shoes", "bags", "boutiques" -> should map to "Apparels & Accessories".
 
 You MUST respond strictly with just the matching category string from the allowed list, or "None" if they are not explicitly or implicitly asking about a specific category.
@@ -163,14 +163,14 @@ else:
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
-            {"role": "assistant", "content": "Hello! Ask me any questions about our database merchants, categories or locations. These are some prompts: List down all merchants. Which merchants are in Orchard? Any snack deals in Central areas? Any Beautea outlets in the East"}
+            {"role": "assistant", "content": "Hello! Ask me questions about our merchants, categories or locations."}
         ]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    if user_prompt := st.chat_input("Ask something (e.g. 'What are the deals for Amore Define?' or 'List merchants in Bugis')"):
+    if user_prompt := st.chat_input("Ask me questions e.g. 'List down all merchants. Which merchants are in Orchard? Any snack deals in Central areas? Any Beautea outlets in the East')"):
         
         with st.chat_message("user"):
             st.write(user_prompt)
