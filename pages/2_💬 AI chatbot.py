@@ -23,7 +23,7 @@ st.set_page_config(
 # ---------------------------------------------------------
 # DATABASE UTILITIES (OPTIMIZED WITH STREAMLIT CACHING)
 # ---------------------------------------------------------
-CSV_FILE_PATH = os.path.join("pages", "merchants.csv")
+CSV_FILE_PATH = os.path.join("pages ", "merchants.csv")
 
 @st.cache_data(show_spinner="Loading merchant database...")
 def load_and_process_database(file_path: str):
