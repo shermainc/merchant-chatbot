@@ -31,9 +31,15 @@ def load_and_process_database(file_path: str):
         if not os.path.exists(file_path):
             return [], [], []
         df = pd.read_csv(file_path, encoding="utf-8")
+        df = df.fillna("")  # Convert blank cells to empty strings to prevent JSON serialisation errors
         data = df.to_dict(orient="records")
-        valid_names = list(set([item["name"] for item in data if "name" in item]))
-        valid_keywords = list(set([item["Keywords"] for item in data if "Keywords" in item]))
+        valid_names = list(set([item["name"] for item in data if item.get("name")]))
+        valid_keywords = list(set([
+            kw.strip()
+            for item in data
+            for kw in str(item.get("Keywords", "")).split(",")
+            if kw.strip()
+        ]))
         return data, valid_names, valid_keywords
     except Exception as e:
         print(f"Error reading CSV file: {str(e)}")
@@ -116,7 +122,7 @@ def pipeline_execute_rag(user_input: str, history: list, matched_merchant: str =
     Second link in the prompt chain. Evaluates database subsets based on target routing parameters.
     """
     if keyword_filter and keyword_filter != "None":
-        filtered_records = [row for row in merchant_data if row.get("Keywords") == keyword_filter]
+        filtered_records = [row for row in merchant_data if keyword_filter in str(row.get("Keywords", "")).split(",") or keyword_filter in [kw.strip() for kw in str(row.get("Keywords", "")).split(",")]]
         context_string = json.dumps(filtered_records, indent=2)
     elif matched_merchant:
         filtered_records = [row for row in merchant_data if row.get("name") == matched_merchant]
