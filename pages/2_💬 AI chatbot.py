@@ -1,16 +1,146 @@
 import streamlit as st
 import pandas as pd
 import re
-import os
-from datetime import datetime
 from helper_functions.llm import get_completion, get_completion_by_messages, count_tokens
 from helper_functions.utility import check_password
 
 if not check_password():
     st.stop()
 
-# ── Constants ────────────────────────────────────────────────────────────────
-CSV_FILE_PATH = "pages/merchants.csv"
+# ── Page config ──────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Merchant Chatbot", page_icon="🛍️")
+st.title("🛍️ Merchant Chatbot")
+st.caption("Ask me about our merchants, deals, and locations!")
+
+st.markdown("""
+<style>
+[data-testid="stChatMessage"] { max-width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Constants ─────────────────────────────────────────────────────────────────
+FALLBACK_PROMPTS = (
+    "I do not know the answer to that. You can try asking me:\n"
+    "- *What merchants are available?*\n"
+    "- *Show me food merchants in Orchard*\n"
+    "- *Is Old Chang Kee our merchant?*\n"
+    "- *List halal merchants near Tampines*"
+)
+
+MULTI_WORD_PHRASES = [
+    "bubble tea", "ice cream", "escape room", "hot pot", "hot dogs",
+    "fried chicken", "fish and chips", "dim sum", "char kway teow",
+    "bak kut teh", "nasi lemak", "laksa", "chicken rice",
+    "north east", "north west",
+]
+
+AREA_KEYWORDS = {
+    # Central
+    "orchard", "somerset", "dhoby ghaut", "city hall", "raffles", "marina",
+    "tanjong pagar", "chinatown", "outram", "tiong bahru", "redhill",
+    "queenstown", "commonwealth", "buona vista", "holland", "farrer road",
+    "botanic gardens", "stevens", "newton", "novena", "toa payoh", "braddell",
+    "bishan", "marymount", "caldecott", "bras basah", "bugis", "rochor",
+    "little india", "lavender", "kallang", "aljunied", "geylang", "paya lebar",
+    "macpherson", "tai seng", "potong pasir", "woodleigh", "serangoon",
+    "whampoa", "bendemeer", "boon keng", "farrer park", "dhoby",
+    # North
+    "yishun", "khatib", "yio chu kang", "ang mo kio", "amk", "sembawang",
+    "canberra", "admiralty", "woodlands", "marsiling", "kranji",
+    # North East
+    "punggol", "sengkang", "buangkok", "hougang", "kovan", "serangoon north",
+    "compassvale", "rivervale", "fernvale", "northshore",
+    # East
+    "tampines", "simei", "tanah merah", "bedok", "kembangan", "eunos",
+    "changi", "expo", "pasir ris", "loyang", "upper changi",
+    # West
+    "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
+    "dover", "one-north", "one north", "kent ridge", "haw par villa",
+    "bukit panjang", "choa chu kang", "yew tee", "bukit batok",
+    "bukit gombak", "hillview", "beauty world", "king albert park",
+    "sixth avenue", "tan kah kee",
+    # South
+    "harbourfront", "vivocity", "sentosa", "labrador park",
+    "pasir panjang", "west coast", "telok blangah",
+}
+
+SG_REGIONS = {
+    "central": [
+        "orchard", "somerset", "dhoby ghaut", "city hall", "raffles", "marina",
+        "tanjong pagar", "chinatown", "outram", "tiong bahru", "redhill",
+        "queenstown", "commonwealth", "buona vista", "holland", "farrer road",
+        "botanic gardens", "stevens", "newton", "novena", "toa payoh", "braddell",
+        "bishan", "marymount", "caldecott", "bras basah", "bugis", "rochor",
+        "little india", "lavender", "kallang", "aljunied", "geylang", "paya lebar",
+        "macpherson", "tai seng", "potong pasir", "woodleigh", "serangoon",
+        "whampoa", "bendemeer", "boon keng", "farrer park", "dhoby",
+    ],
+    "north": [
+        "yishun", "khatib", "yio chu kang", "ang mo kio", "amk", "sembawang",
+        "canberra", "admiralty", "woodlands", "marsiling", "kranji",
+    ],
+    "north east": [
+        "punggol", "sengkang", "buangkok", "hougang", "kovan", "serangoon north",
+        "compassvale", "rivervale", "fernvale", "northshore",
+    ],
+    "east": [
+        "tampines", "simei", "tanah merah", "bedok", "kembangan", "eunos",
+        "changi", "expo", "pasir ris", "loyang", "upper changi",
+    ],
+    "south": [
+        "harbourfront", "vivocity", "sentosa", "labrador park",
+        "pasir panjang", "west coast", "telok blangah",
+    ],
+    "west": [
+        "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
+        "dover", "one-north", "one north", "kent ridge", "haw par villa",
+        "bukit panjang", "choa chu kang", "yew tee", "bukit batok",
+        "bukit gombak", "hillview", "beauty world", "king albert park",
+        "sixth avenue", "tan kah kee",
+    ],
+}
+
+POSTAL_DISTRICT_REGION = {
+    # Central
+    "01": "central", "02": "central", "03": "central", "04": "central",
+    "05": "central", "06": "central", "07": "central", "08": "central",
+    "09": "central", "10": "central", "11": "central", "12": "central",
+    "13": "central", "14": "central", "15": "central", "16": "central",
+    "17": "central", "18": "central", "19": "central", "20": "central",
+    "21": "central", "22": "central", "23": "central",
+    # South
+    "24": "south", "25": "south", "26": "south", "27": "south",
+    "28": "south", "29": "south", "30": "south",
+    "31": "south", "32": "south", "33": "south",
+    # East
+    "34": "east", "35": "east", "36": "east", "37": "east",
+    "38": "east", "39": "east", "40": "east", "41": "east",
+    "42": "east", "43": "east", "44": "east", "45": "east",
+    "46": "east", "47": "east", "48": "east",
+    "49": "east", "50": "east", "51": "east", "52": "east",
+    # North East
+    "53": "north east", "54": "north east", "55": "north east",
+    "56": "north east", "57": "north east",
+    "79": "north east", "80": "north east",
+    "81": "north east", "82": "north east", "83": "north east", "84": "north east",
+    # West
+    "60": "west", "61": "west", "62": "west", "63": "west", "64": "west",
+    "65": "west", "66": "west", "67": "west", "68": "west", "69": "west",
+    "70": "west", "71": "west",
+    # North
+    "72": "north", "73": "north", "74": "north", "75": "north", "76": "north",
+    "77": "north", "78": "north",
+}
+
+REGION_EMOJI = {
+    "central": "🏙️ Central",
+    "north": "🧭 North",
+    "north east": "🧭 North East",
+    "east": "🌅 East",
+    "west": "🌇 West",
+    "south": "⚓ South",
+    "other": "📍 Other",
+}
 
 STOPWORDS = {
     "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
@@ -24,227 +154,73 @@ STOPWORDS = {
     "than", "too", "very", "just", "because", "as", "until", "while",
     "i", "me", "my", "we", "our", "you", "your", "he", "she", "it",
     "they", "them", "their", "what", "which", "who", "this", "that",
-    "these", "those", "am", "show", "find", "get", "give", "tell",
-    "list", "any", "all", "some", "there", "here", "where", "when",
-    "how", "want", "looking", "look", "near", "around", "deals", "deal",
-    "merchant", "merchants", "available", "please", "hi", "hello",
-    "halal", "food",
+    "these", "those", "am", "any", "show", "find", "get", "give", "tell",
+    "list", "near", "around", "want", "looking", "look", "like", "know",
+    "there", "here", "where", "when", "how", "all", "some", "no", "if",
+    "merchant", "merchants", "deal", "deals", "outlet", "outlets",
+    "store", "stores", "shop", "shops", "available", "singapore",
 }
 
-# ── Multi-word keyword phrases (matched before word-splitting) ────────────────
-MULTI_WORD_PHRASES = [
-    "bubble tea", "boba tea", "milk tea", "ice cream", "escape room",
-    "hot pot", "hot dog", "fried chicken", "roast duck", "dim sum",
-    "char kway teow", "nasi lemak", "chicken rice", "fish and chips",
-    "beauty salon", "nail art", "hair salon", "hair cut", "hair color",
-    "personal trainer", "gym membership", "yoga class", "spin class",
-    "board game", "video game", "laser tag", "go kart", "mini golf",
-    "fast food", "fine dining", "buffet restaurant", "food court",
-    "coffee shop", "cake shop", "bread bakery", "pastry shop",
-    "sports wear", "sports equipment", "outdoor gear",
-]
+# ── CSV loading ───────────────────────────────────────────────────────────────
+from datetime import datetime
 
-# ── Singapore area keywords ───────────────────────────────────────────────────
-AREA_KEYWORDS = {
-    "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
-    "marina bay", "bugis", "lavender", "kallang", "tampines", "bedok",
-    "pasir ris", "simei", "tanah merah", "kembangan", "eunos", "paya lebar",
-    "aljunied", "hougang", "serangoon", "kovan", "woodleigh", "potong pasir",
-    "boon keng", "farrer park", "little india", "rochor", "dhoby",
-    "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
-    "dover", "buona vista", "one-north", "kent ridge", "haw par villa",
-    "pasir panjang", "labrador park", "harbourfront", "vivocity",
-    "ang mo kio", "bishan", "braddell", "toa payoh", "novena", "newton",
-    "stevens", "botanic gardens", "caldecott", "marymount", "yishun",
-    "khatib", "yio chu kang", "admiralty", "sembawang", "canberra",
-    "woodlands", "marsiling", "kranji", "bukit panjang", "choa chu kang",
-    "yew tee", "bukit batok", "bukit gombak", "hillview", "beauty world",
-    "king albert park", "sixth avenue", "tan kah kee", "botanic",
-    "holland village", "one north", "queenstown", "redhill", "tiong bahru",
-    "outram", "chinatown", "clarke quay", "fort canning", "bras basah",
-    "esplanade", "promenade", "bayfront", "downtown", "telok ayer",
-    "tanjong pagar", "sentosa", "punggol", "sengkang",
-    "buangkok", "compassvale", "rivervale", "fernvale", "anchorvale",
-    "balestier", "geylang", "ubi", "macpherson", "tai seng", "bartley",
-    "upper changi", "expo", "changi", "loyang", "whampoa",
-    "telok blangah", "west coast",
-}
-
-# ── Region → list of area keywords ───────────────────────────────────────────
-SG_REGIONS = {
-    "central": [
-        "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
-        "marina bay", "bugis", "lavender", "kallang", "little india", "rochor",
-        "dhoby", "novena", "newton", "stevens", "bishan", "braddell", "toa payoh",
-        "boon keng", "farrer park", "potong pasir", "woodleigh", "balestier",
-        "queenstown", "redhill", "tiong bahru", "outram", "chinatown",
-        "clarke quay", "fort canning", "bras basah", "esplanade", "promenade",
-        "bayfront", "downtown", "telok ayer", "tanjong pagar", "geylang",
-        "ubi", "macpherson", "tai seng", "bartley", "botanic gardens",
-        "caldecott", "marymount", "botanic", "holland village", "whampoa",
-    ],
-    "north": [
-        "yishun", "khatib", "yio chu kang", "admiralty", "sembawang",
-        "canberra", "woodlands", "marsiling", "kranji",
-    ],
-    "north east": [
-        "sengkang", "punggol", "buangkok", "compassvale", "rivervale",
-        "fernvale", "anchorvale", "hougang", "serangoon", "kovan",
-        "ang mo kio",
-    ],
-    "northeast": [
-        "sengkang", "punggol", "buangkok", "compassvale", "rivervale",
-        "fernvale", "anchorvale", "hougang", "serangoon", "kovan",
-        "ang mo kio",
-    ],
-    "east": [
-        "tampines", "bedok", "pasir ris", "simei", "tanah merah",
-        "kembangan", "eunos", "paya lebar", "aljunied", "upper changi",
-        "expo", "changi", "loyang",
-    ],
-    "west": [
-        "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
-        "dover", "buona vista", "one-north", "one north", "kent ridge",
-        "haw par villa", "pasir panjang", "labrador park", "harbourfront",
-        "vivocity", "bukit panjang", "choa chu kang", "yew tee",
-        "bukit batok", "bukit gombak", "hillview", "beauty world",
-        "king albert park", "sixth avenue", "tan kah kee",
-    ],
-    "south": [
-        "harbourfront", "vivocity", "sentosa", "labrador park",
-        "pasir panjang", "west coast", "telok blangah",
-    ],
-}
-
-# ── Region label for display ──────────────────────────────────────────────────
-REGION_DISPLAY = {
-    "central": "🏙️ Central",
-    "north": "🧭 North",
-    "north east": "🧭 North East",
-    "east": "🌅 East",
-    "west": "🌇 West",
-    "south": "⚓ South",
-    "other": "📍 Other",
-}
-
-# ── Postal district → region fallback ────────────────────────────────────────
-POSTAL_DISTRICT_REGION = {
-    # Central
-    "01": "central", "02": "central", "03": "central", "04": "central",
-    "05": "central", "06": "central", "07": "central", "08": "central",
-    "09": "central", "10": "central", "11": "central", "12": "central",
-    "13": "central", "14": "central", "15": "central", "16": "central",
-    "17": "central", "18": "central", "19": "central", "20": "central",
-    "21": "central", "22": "central", "23": "central",
-    # West
-    "60": "west", "61": "west", "62": "west", "63": "west", "64": "west",
-    "65": "west", "66": "west", "67": "west", "68": "west", "69": "west",
-    "70": "west", "71": "west",
-    # North
-    "72": "north", "73": "north", "75": "north", "76": "north",
-    "77": "north", "78": "north",
-    # North East
-    "53": "north east", "54": "north east", "55": "north east",
-    "56": "north east", "57": "north east",
-    "79": "north east", "80": "north east",
-    # East
-    "34": "east", "35": "east", "36": "east", "37": "east",
-    "38": "east", "39": "east", "40": "east", "41": "east",
-    "42": "east", "43": "east", "44": "east", "45": "east",
-    "46": "east", "47": "east", "48": "east",
-    "49": "east", "50": "east", "51": "east", "52": "east",
-    # South
-    "24": "south", "25": "south", "26": "south", "27": "south",
-    "28": "south", "29": "south", "30": "south",
-    "31": "south", "32": "south", "33": "south",
-}
-
-FALLBACK_PROMPTS = (
-    "I'm sorry, I'm not sure what you're looking for! Here are some things you can try:\n\n"
-    "🔍 **Search by category:** 'Show me food deals', 'spa merchants', 'gym discounts'\n"
-    "📍 **Search by location:** 'Snacks near Orchard', 'restaurants in Tampines'\n"
-    "🏪 **Find a merchant:** 'Is 4Fingers our merchant?', 'Do you have Subway?'\n"
-    "📋 **See all outlets:** 'Old Chang Kee outlets', 'Where are the Starbucks branches?'\n"
-    "🥩 **Filter by Halal:** 'List me halal food', 'halal merchants'\n\n"
-    "_Try one of the above to get started!_"
-)
-
-# ── Data loading ──────────────────────────────────────────────────────────────
-@st.cache_data
-def load_and_process_database():
-    try:
-        df = pd.read_csv(CSV_FILE_PATH)
-        df.columns = df.columns.str.strip()
-        for col in df.columns:
-            if df[col].dtype == object:
-                df[col] = df[col].fillna("").astype(str).str.strip()
-
-        valid_rows = [row for row in df.to_dict(orient="records") if is_deal_valid(row)]
-        data = valid_rows
-
-        seen_names = set()
-        unique_merchants = []
-        for row in data:
-            name = row.get("name", "").strip()
-            if name and name not in seen_names:
-                seen_names.add(name)
-                unique_merchants.append(name)
-        unique_merchants.sort()
-
-        keyword_index = {}
-        for idx, row in enumerate(data):
-            raw_keywords = row.get("Keywords", "")
-            for kw in raw_keywords.split(","):
-                kw_clean = kw.strip().lower()
-                if kw_clean:
-                    keyword_index.setdefault(kw_clean, []).append(idx)
-
-        valid_names = [n for n in unique_merchants if n]
-        valid_keywords = sorted(keyword_index.keys())
-
-        return data, unique_merchants, keyword_index, valid_names, valid_keywords
-
-    except Exception as e:
-        st.error(f"Failed to load database from {CSV_FILE_PATH}: {e}")
-        return [], [], {}, [], []
-
-
-# ── Date validation ───────────────────────────────────────────────────────────
 def is_deal_valid(row):
     today = datetime.today()
-    for fmt in ("%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d"):
+    for col in ["startDate", "endDate"]:
+        val = str(row.get(col, "")).strip()
+        if not val:
+            return True
+        for fmt in ["%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d"]:
+            try:
+                datetime.strptime(val, fmt)
+                break
+            except ValueError:
+                continue
+    end_val = str(row.get("endDate", "")).strip()
+    if not end_val:
+        return True
+    for fmt in ["%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d"]:
         try:
-            start = datetime.strptime(row.get("startDate", ""), fmt)
-            end = datetime.strptime(row.get("endDate", ""), fmt)
-            return start <= today <= end
+            end_date = datetime.strptime(end_val, fmt)
+            return end_date >= today
         except ValueError:
             continue
     return True
 
+@st.cache_data
+def load_data():
+    df = pd.read_csv("pages/merchants.csv", dtype=str)
+    df.columns = df.columns.str.strip()
+    df = df.fillna("")
+    df = df[df.apply(is_deal_valid, axis=1)].reset_index(drop=True)
+    return df
 
-# ── Assign a region label to an address string ───────────────────────────────
-def get_region_for_address(address):
-    addr_lower = address.lower()
+@st.cache_data
+def build_keyword_index(_df):
+    index = {}
+    for i, row in _df.iterrows():
+        kw_field = str(row.get("Keywords", "")).lower()
+        desc_field = str(row.get("description", "")).lower()
+        addr_field = str(row.get("address", "")).lower()
+        tokens = set()
+        for field in [kw_field, desc_field, addr_field]:
+            for phrase in MULTI_WORD_PHRASES:
+                if phrase in field:
+                    tokens.add(phrase)
+            for word in re.split(r"[,\s]+", field):
+                word = word.strip().lower()
+                if word and word not in STOPWORDS:
+                    tokens.add(word)
+        for token in tokens:
+            index.setdefault(token, []).append(i)
+    return index
 
-    # 1. Keyword matching
-    for region, areas in SG_REGIONS.items():
-        if region == "northeast":  # skip duplicate alias
-            continue
-        if any(area in addr_lower for area in areas):
-            return region
+df = load_data()
+keyword_index = build_keyword_index(df)
+unique_merchants = sorted(df["name"].dropna().unique().tolist())
 
-    # 2. Postal code fallback — extract S(XXXXXX) or bare 6-digit number
-    postal_match = re.search(r"S\((\d{6})\)|(?<!\d)(\d{6})(?!\d)", address)
-    if postal_match:
-        postal = postal_match.group(1) or postal_match.group(2)
-        district = postal[:2]
-        if district in POSTAL_DISTRICT_REGION:
-            return POSTAL_DISTRICT_REGION[district]
+# ── Helper functions ──────────────────────────────────────────────────────────
 
-    return "other"
-
-
-# ── Format description text into readable bullet points ──────────────────────
 def format_description(desc):
     if not desc:
         return ""
@@ -253,421 +229,323 @@ def format_description(desc):
         return desc
     result = [f"**{lines[0]}**"]
     for line in lines[1:]:
-        result.append(f"  - {line}")
-    return "\n".join(result)
+        result.append(line)
+    return "  \n   ".join(result)
 
+def get_region_for_address(address, postal=""):
+    addr_lower = address.lower()
 
-# ── Search helpers ────────────────────────────────────────────────────────────
+    # 1. Keyword matching — South checked before West to avoid VivoCity/Harbourfront clash
+    region_order = ["central", "north", "north east", "east", "south", "west"]
+    for region in region_order:
+        areas = SG_REGIONS.get(region, [])
+        if any(area in addr_lower for area in areas):
+            return region
+
+    # 2. Postal code fallback — use postalC column value directly
+    code = postal.strip() if postal else ""
+    if not code:
+        m = re.search(r"S\((\d{6})\)|(?<!\d)(\d{6})(?!\d)", address)
+        if m:
+            code = m.group(1) or m.group(2)
+    if code and len(code) >= 2:
+        district = code[:2]
+        if district in POSTAL_DISTRICT_REGION:
+            return POSTAL_DISTRICT_REGION[district]
+
+    return "other"
+
 def extract_search_terms(query):
-    q_lower = query.lower()
-    areas = []
+    q = query.lower()
+    found_phrases = []
+    for phrase in MULTI_WORD_PHRASES:
+        if phrase in q:
+            found_phrases.append(phrase)
+            q = q.replace(phrase, " ")
 
-    for region, sub_areas in SG_REGIONS.items():
-        if region in q_lower:
-            for a in sub_areas:
-                if a not in areas:
-                    areas.append(a)
+    words = re.split(r"[,\s]+", q)
+    words = [w.strip() for w in words if w.strip() and w not in STOPWORDS]
 
-    for area in sorted(AREA_KEYWORDS, key=len, reverse=True):
-        if area in q_lower and area not in areas:
-            areas.append(area)
+    area_found = []
+    non_area_terms = []
+    for w in words:
+        if w in AREA_KEYWORDS:
+            area_found.append(w)
+        else:
+            non_area_terms.append(w)
 
-    remaining = q_lower
-    matched_phrases = []
-    for phrase in sorted(MULTI_WORD_PHRASES, key=len, reverse=True):
-        if phrase in remaining:
-            matched_phrases.append(phrase)
-            remaining = remaining.replace(phrase, " ")
+    for phrase in found_phrases:
+        parts = phrase.split()
+        if all(p in AREA_KEYWORDS for p in parts):
+            area_found.append(phrase)
+        else:
+            non_area_terms.append(phrase)
 
-    area_words = set(w for a in areas for w in a.split())
-    single_words = [
-        w for w in re.findall(r"\b\w+\b", remaining)
-        if w not in STOPWORDS
-        and w not in area_words
-        and w not in SG_REGIONS
-        and len(w) > 2
-    ]
+    # Expand region names
+    region_map = {
+        "central": SG_REGIONS["central"],
+        "north": SG_REGIONS["north"],
+        "south": SG_REGIONS["south"],
+        "east": SG_REGIONS["east"],
+        "west": SG_REGIONS["west"],
+        "northeast": SG_REGIONS["north east"],
+        "north east": SG_REGIONS["north east"],
+    }
+    expanded_areas = []
+    for a in area_found:
+        if a in region_map:
+            expanded_areas.extend(region_map[a])
+        else:
+            expanded_areas.append(a)
 
-    keywords = matched_phrases + single_words
-    return keywords, areas
-
+    return non_area_terms, expanded_areas
 
 def is_halal_query(query):
     return "halal" in query.lower()
 
+def find_merchant_by_name(name):
+    name_lower = name.lower()
+    matches = df[df["name"].str.lower() == name_lower]
+    return matches
 
-def is_merchant_query(query):
-    patterns = [
-        r"\bis\b.+\b(our|a|an|your)\b.+\bmerchant\b",
-        r"\bdo you have\b",
-        r"\bdo we have\b",
-        r"\bis .+ (listed|included|part of|in the)\b",
-    ]
-    q = query.lower()
-    return any(re.search(p, q) for p in patterns)
+def find_all_outlets(name):
+    name_lower = name.lower()
+    return df[df["name"].str.lower() == name_lower]
 
+def count_all_outlets(name):
+    return len(find_all_outlets(name))
 
-def find_merchant_by_name(query, unique_merchants):
-    q = query.lower()
-    for name in unique_merchants:
-        if name.lower() in q:
-            return name
-    for name in unique_merchants:
-        parts = name.lower().split()
-        if any(p in q for p in parts if len(p) > 3):
-            return name
-    return None
+def list_merchants_by_keyword(keywords, areas, halal_only=False):
+    candidate_sets = []
 
-
-def is_list_all_query(query):
-    q = query.lower()
-    patterns = [
-        r"list all",
-        r"show all",
-        r"all merchants",
-        r"full list",
-        r"every merchant",
-        r"how many merchants",
-    ]
-    return any(re.search(p, q) for p in patterns)
-
-
-def is_outlet_query(query):
-    q = query.lower()
-    return any(word in q for word in ["outlet", "outlets", "branch", "branches", "location", "locations"])
-
-
-def find_all_outlets(merchant_name, data):
-    name_lower = merchant_name.lower()
-    return [row for row in data if row.get("name", "").lower() == name_lower]
-
-
-def list_merchants_by_keyword(search_terms, area_found, data, keyword_index, halal_only=False, limit=10):
-    if not search_terms and not area_found and not halal_only:
-        return []
-
-    if search_terms:
-        scores = {}
-        for term in search_terms:
-            for kw, indices in keyword_index.items():
-                if term in kw or kw in term:
-                    for idx in indices:
-                        scores[idx] = scores.get(idx, 0) + 1
-
-        matched = []
-        seen_names = set()
-        for idx, score in sorted(scores.items(), key=lambda x: -x[1]):
-            row = data[idx]
-            if area_found and not any(area in row.get("address", "").lower() for area in area_found):
-                continue
-            if halal_only and row.get("Halal", "").strip().lower() != "yes":
-                continue
-            name = row.get("name", "").strip()
-            if name and name not in seen_names:
-                seen_names.add(name)
-                matched.append(row)
-            if len(matched) >= limit:
-                break
-    else:
-        matched = []
-        seen_names = set()
-        for row in data:
-            if area_found and not any(area in row.get("address", "").lower() for area in area_found):
-                continue
-            if halal_only and row.get("Halal", "").strip().lower() != "yes":
-                continue
-            name = row.get("name", "").strip()
-            if name and name not in seen_names:
-                seen_names.add(name)
-                matched.append(row)
-            if len(matched) >= limit:
-                break
-
-    return sorted(matched, key=lambda r: r.get("name", ""))
-
-
-# ── Count total outlets for a merchant ───────────────────────────────────────
-def count_all_outlets(merchant_name, data):
-    return sum(1 for row in data if row.get("name", "").strip() == merchant_name)
-
-
-# ── Formatters ────────────────────────────────────────────────────────────────
-def format_outlet_list(merchant_name, outlets, area_filter=None):
-    if not outlets:
-        return (
-            f"I'm sorry, I couldn't find any outlets for **{merchant_name}**. "
-            "I do not know if they have other locations not listed in our system."
-        )
-
-    display_outlets = outlets
-    area_note = ""
-
-    if area_filter:
-        filtered = [
-            row for row in outlets
-            if any(area in row.get("address", "").lower() for area in area_filter)
-        ]
-        if filtered:
-            display_outlets = filtered
+    if keywords:
+        for kw in keywords:
+            matched = set()
+            for idx_kw, indices in keyword_index.items():
+                if kw in idx_kw or idx_kw in kw:
+                    matched.update(indices)
+            candidate_sets.append(matched)
+        if candidate_sets:
+            combined = candidate_sets[0]
+            for s in candidate_sets[1:]:
+                combined = combined.intersection(s)
         else:
-            area_note = "_No outlets found in that area — showing all outlets instead._\n\n"
+            combined = set()
+    else:
+        combined = set(df.index.tolist())
 
-    # Check if all outlets share the same description
-    descriptions = [row.get("description", "").strip() for row in display_outlets]
-    all_same_desc = len(set(descriptions)) == 1 and descriptions[0]
+    if areas:
+        area_indices = set()
+        for area in areas:
+            for idx_kw, indices in keyword_index.items():
+                if area in idx_kw or idx_kw in area:
+                    area_indices.update(indices)
+        combined = combined.intersection(area_indices)
 
-    # Group outlets by region
-    region_order = ["central", "north", "north east", "east", "west", "south", "other"]
-    grouped = {r: [] for r in region_order}
+    results = df.loc[list(combined)]
 
-    for row in display_outlets:
-        region = get_region_for_address(row.get("address", ""))
-        grouped[region].append(row)
+    if halal_only:
+        results = results[results["Halal"].str.strip().str.lower() == "yes"]
 
-    lines = [f"{area_note}Here are the outlets for **{merchant_name}** ({len(display_outlets)} found):\n"]
+    seen_names = set()
+    unique_results = []
+    for _, row in results.iterrows():
+        name = row["name"]
+        if name not in seen_names:
+            seen_names.add(name)
+            unique_results.append(row)
 
-    # Show shared description ONCE at the top
-    if all_same_desc:
-        lines.append(f"🎁 {format_description(descriptions[0])}\n")
-        lines.append("---\n")
+    unique_results.sort(key=lambda r: r["name"])
+    return unique_results[:10], len(unique_results)
 
-    # List outlets by region
-    for region in region_order:
-        rows_in_region = grouped[region]
-        if not rows_in_region:
-            continue
-        label = REGION_DISPLAY.get(region, "📍 Other")
-        lines.append(f"**{label}**")
-        for row in rows_in_region:
-            address = row.get("address", "N/A")
-            postal = row.get("postalC", "")
-            postal_str = f" S({postal})" if postal else ""
-            lines.append(f"• {address}{postal_str}")
-            # Only show individual desc if outlets have different descriptions
-            if not all_same_desc:
-                desc = row.get("description", "").strip()
-                if desc:
-                    lines.append(f"  🎁 {format_description(desc)}")
-        lines.append("")
+def format_keyword_list(results, total_count):
+    if not results:
+        return FALLBACK_PROMPTS
 
-    return "\n".join(lines)
-
-
-def format_keyword_list(matched_rows, data, halal_only=False):
-    if not matched_rows:
-        return (
-            "I'm sorry, I do not know of any active merchants matching your search in our programme.\n\n"
-            "Here are some things you can try:\n\n"
-            "🔍 **Search by category:** 'food', 'spa', 'gym', 'retail', 'entertainment'\n"
-            "📍 **Search by location:** 'Orchard', 'Tampines', 'Bugis', 'Jurong'\n"
-            "🥩 **Filter by Halal:** 'halal food', 'halal merchants'\n"
-            "🏪 **Find a specific merchant:** 'Is 4Fingers our merchant?'\n"
-            "📋 **See outlets:** 'Old Chang Kee outlets'\n\n"
-            "_Try narrowing down with a keyword or location!_"
-        )
-
-    prefix = "Halal merchants" if halal_only else "Here are some merchants for you"
-    lines = [f"{prefix} (showing top {len(matched_rows)}, A–Z):\n"]
-
-    for i, row in enumerate(matched_rows, 1):
-        name = row.get("name", "N/A")
-        address = row.get("address", "N/A")
+    lines = [f"Here are merchants matching your search ({min(len(results), 10)} shown):\n"]
+    for row in results:
+        name = row["name"]
+        address = row.get("address", "")
         postal = row.get("postalC", "")
         postal_str = f" S({postal})" if postal else ""
-        desc = row.get("description", "").strip()
+        desc = format_description(row.get("description", ""))
+        outlet_count = count_all_outlets(name)
 
-        total_outlets = count_all_outlets(name, data)
-
-        lines.append(f"**{i}. {name}**")
-        lines.append(f"   📍 {address}{postal_str}")
+        lines.append(f"**{name}**")
+        lines.append(f"📍 {address}{postal_str}")
         if desc:
-            lines.append(f"   🎁 {format_description(desc)}")
-            lines.append("")  # blank line between description and disclaimer
-
-        if total_outlets > 1:
+            lines.append(f"🎁 {desc}")
+        if outlet_count > 1:
+            lines.append("")
             lines.append(
-                f"   ℹ️ _This merchant has **{total_outlets} outlets** in total. "
-                f"Ask me which area you're looking at, or try '{name} outlets' to see all locations._"
+                f"ℹ️ This merchant has {outlet_count} outlets in total. "
+                f"Ask me which area you're looking at, or try '*{name} outlets*' to see all locations."
             )
+        lines.append("")
 
-        lines.append("")  # blank line between merchants
-
-    if len(matched_rows) == 10:
+    if total_count == 10:
         lines.append("_Showing first 10 results. Try a more specific search to narrow down!_")
 
     return "\n".join(lines)
 
+def format_outlet_list(outlets_df, merchant_name, area_filter=None):
+    if area_filter:
+        filtered = outlets_df[
+            outlets_df["address"].str.lower().str.contains(area_filter.lower(), na=False)
+        ]
+        if filtered.empty:
+            note = f"_(No outlets found specifically in {area_filter.title()}. Showing all outlets instead.)_\n\n"
+            filtered = outlets_df
+        else:
+            note = ""
+            outlets_df = filtered
+    else:
+        note = ""
 
-# ── LLM wrapper ───────────────────────────────────────────────────────────────
-def safe_llm_call(prompt_text):
+    total = len(outlets_df)
+    lines = [f"Here are the outlets for **{merchant_name}** ({total} found):\n"]
+    if note:
+        lines.append(note)
+
+    # Check if all outlets share the same description
+    descs = outlets_df["description"].str.strip().unique()
+    shared_desc = descs[0] if len(descs) == 1 and descs[0] else None
+    if shared_desc:
+        lines.append(f"🎁 {format_description(shared_desc)}\n")
+
+    # Group by region
+    region_buckets = {}
+    for _, row in outlets_df.iterrows():
+        region = get_region_for_address(row.get("address", ""), row.get("postalC", ""))
+        region_buckets.setdefault(region, []).append(row)
+
+    region_order = ["central", "north", "north east", "east", "west", "south", "other"]
+    for region in region_order:
+        rows = region_buckets.get(region, [])
+        if not rows:
+            continue
+        lines.append(f"\n{REGION_EMOJI[region]}")
+        for row in rows:
+            address = row.get("address", "")
+            postal = row.get("postalC", "")
+            postal_str = f" S({postal})" if postal else ""
+            desc = row.get("description", "").strip()
+            lines.append(f"• {address}{postal_str}")
+            if desc and not shared_desc:
+                lines.append(f"  🎁 {format_description(desc)}")
+
+    return "\n".join(lines)
+
+def safe_llm_call(prompt, context):
     try:
-        return get_completion(prompt_text)
+        response = get_completion(prompt)
+        return response
     except Exception as e:
         err = str(e).lower()
-        if any(k in err for k in ["ratelimit", "rate_limit", "429", "token", "context_length", "maximum context"]):
+        if "rate" in err or "token" in err or "limit" in err or "quota" in err:
             return FALLBACK_PROMPTS
-        raise
+        return FALLBACK_PROMPTS
 
+def handle_user_query(query, last_context=None):
+    q = query.lower().strip()
+    halal = is_halal_query(q)
 
-# ── Main query handler ────────────────────────────────────────────────────────
-def handle_user_query(query, data, unique_merchants, keyword_index, last_context=None):
-    halal_only = is_halal_query(query)
+    # ── List all merchants ────────────────────────────────────────────────────
+    if re.search(r"\b(list|show|all)\b.*\bmerchants?\b", q) and not any(
+        w in q for w in AREA_KEYWORDS
+    ) and not halal:
+        sample = unique_merchants[:10]
+        result = "Here are some of our merchants (A–Z):\n\n"
+        result += "\n".join(f"- {m}" for m in sample)
+        result += "\n\n_Specify a region or category to narrow down, e.g. 'food merchants in Tampines'._"
+        return result, {"keywords": [], "areas": []}
 
-    if is_list_all_query(query) or is_outlet_query(query) or is_merchant_query(query):
-        st.session_state.last_search_context = {"keywords": [], "areas": []}
-
-    # 1. List all merchants
-    if is_list_all_query(query) and not halal_only:
-        total = len(unique_merchants)
-        first_10 = unique_merchants[:10]
-        lines = [f"We have **{total} merchants** in our programme. Here are the first 10 (A–Z):\n"]
-        for i, name in enumerate(first_10, 1):
-            lines.append(f"**{i}. {name}**")
-        lines.append(
-            f"\n_Showing 10 of {total}. Want to see more? Try:_\n"
-            "- 🗺️ A region: *'merchants in the East'*, *'Central merchants'*, *'North merchants'*\n"
-            "- 📍 A specific area: *'merchants near Whampoa'*, *'deals in Tampines'*\n"
-            "- 🔍 A category: *'food merchants'*, *'spa deals'*"
-        )
-        return "\n".join(lines)
-
-    # 2. Outlet query
-    if is_outlet_query(query):
-        merchant_name = find_merchant_by_name(query, unique_merchants)
-        if merchant_name:
-            outlets = find_all_outlets(merchant_name, data)
-            _, area_filter = extract_search_terms(query)
-            return format_outlet_list(merchant_name, outlets, area_filter=area_filter if area_filter else None)
-        return (
-            "I'm sorry, I do not know which merchant's outlets you're looking for. Try:\n"
-            "'Old Chang Kee outlets' or 'Where are the Starbucks branches?'"
-        )
-
-    # 3. Is X our merchant?
-    if is_merchant_query(query):
-        merchant_name = find_merchant_by_name(query, unique_merchants)
-        if merchant_name:
-            rows = [row for row in data if row.get("name", "").strip() == merchant_name]
-            desc_text = ""
-            if rows:
-                desc = rows[0].get("description", "").strip()
-                if desc:
-                    desc_text = f"\n\n🎁 {format_description(desc)}"
-            if len(rows) == 1:
-                addr = rows[0].get("address", "").strip()
-                postal = rows[0].get("postalC", "").strip()
-                postal_str = f" S({postal})" if postal else ""
-                return (
-                    f"Yes! **{merchant_name}** is one of our merchants.\n\n"
-                    f"📍 {addr}{postal_str}{desc_text}\n\n"
-                    f"Ask me about their deals or outlets!"
-                )
-            else:
-                return (
-                    f"Yes! **{merchant_name}** is one of our merchants and has **{len(rows)} outlets**.{desc_text}\n\n"
-                    f"Which area are you looking at? For example:\n"
-                    f"- 🗺️ A region: *Central, North, South, East, West, North East*\n"
-                    f"- 📍 A specific area: *Raffles Place, Tampines, Orchard, Jurong...*\n\n"
-                    f"Or ask: *'{merchant_name} outlets'* to see all locations."
-                )
-        return (
-            "I'm sorry, I do not know of that merchant in our programme. "
-            "They may not be listed, or try checking the spelling.\n\n"
-            "You can also ask: 'Show me food merchants' to browse what's available."
-        )
-
-    # 4. Halal-only query
-    if halal_only:
-        search_terms, area_found = extract_search_terms(query)
-        if not search_terms and not area_found and last_context:
-            search_terms = last_context.get("keywords", [])
-            area_found = last_context.get("areas", [])
-        matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index, halal_only=True)
-        st.session_state.last_search_context = {"keywords": search_terms, "areas": area_found}
-        return format_keyword_list(matched, data, halal_only=True)
-
-    # 5. Keyword / area search
-    search_terms, area_found = extract_search_terms(query)
-
-    if not search_terms and not area_found and last_context:
-        search_terms = last_context.get("keywords", [])
-        area_found = last_context.get("areas", [])
-
-    if search_terms or area_found:
-        matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index)
-        st.session_state.last_search_context = {"keywords": search_terms, "areas": area_found}
-        return format_keyword_list(matched, data)
-
-    # 6. Fallback → LLM
-    merchant_summary = "\n".join(
-        f"- {r['name']}: {r.get('description', '')}" for r in data[:30]
+    # ── Outlet listing ────────────────────────────────────────────────────────
+    outlet_match = re.search(
+        r"(.+?)\s+outlets?(?:\s+in\s+(.+))?$", q, re.IGNORECASE
     )
-    if count_tokens(merchant_summary) > 3000:
-        merchant_summary = "\n".join(
-            f"- {r['name']}: {r.get('description', '')}" for r in data[:15]
-        )
+    if outlet_match:
+        name_candidate = outlet_match.group(1).strip()
+        area_filter = outlet_match.group(2).strip() if outlet_match.group(2) else None
+        matched = find_all_outlets(name_candidate)
+        if not matched.empty:
+            return format_outlet_list(matched, matched.iloc[0]["name"], area_filter), {"keywords": [], "areas": []}
+
+    # ── Merchant name check ───────────────────────────────────────────────────
+    for name in unique_merchants:
+        if name.lower() in q:
+            rows = find_merchant_by_name(name)
+            if not rows.empty:
+                if len(rows) == 1:
+                    row = rows.iloc[0]
+                    address = row.get("address", "")
+                    postal = row.get("postalC", "")
+                    postal_str = f" S({postal})" if postal else ""
+                    desc = format_description(row.get("description", ""))
+                    resp = f"✅ Yes, **{name}** is one of our merchants!\n\n📍 {address}{postal_str}"
+                    if desc:
+                        resp += f"\n\n🎁 {desc}"
+                    return resp, {"keywords": [], "areas": []}
+                else:
+                    return (
+                        f"✅ Yes, **{name}** is one of our merchants! "
+                        f"They have **{len(rows)} outlets** across Singapore. "
+                        f"Which area are you looking at? Or try '*{name} outlets*' to see all locations.",
+                        {"keywords": [], "areas": []},
+                    )
+
+    # ── Keyword / area search ─────────────────────────────────────────────────
+    keywords, areas = extract_search_terms(q)
+
+    if not keywords and not areas and last_context:
+        keywords = last_context.get("keywords", [])
+        areas = last_context.get("areas", [])
+
+    if keywords or areas or halal:
+        results, total = list_merchants_by_keyword(keywords, areas, halal_only=halal)
+        if results:
+            return format_keyword_list(results, total), {"keywords": keywords, "areas": areas}
+        else:
+            return FALLBACK_PROMPTS, {"keywords": keywords, "areas": areas}
+
+    # ── LLM fallback ──────────────────────────────────────────────────────────
+    merchant_names = ", ".join(unique_merchants[:50])
+    summary = f"We have the following merchants: {merchant_names}."
+    if count_tokens(summary) > 3000:
+        summary = f"We have the following merchants: {', '.join(unique_merchants[:15])}."
 
     prompt = (
-        f"You are a helpful assistant for a merchant rewards programme in Singapore.\n"
-        f"Here are some active merchants and their deals:\n{merchant_summary}\n\n"
-        f"User asked: {query}\n\n"
-        f"Answer helpfully and concisely. If the answer is not in the merchant list, "
-        f"say you do not know and suggest they try searching by category or location."
+        f"You are a helpful merchant chatbot. Answer based only on this information:\n\n"
+        f"{summary}\n\n"
+        f"User question: {query}\n\n"
+        f"If you do not know, say 'I do not know'."
     )
-    return safe_llm_call(prompt)
+    return safe_llm_call(prompt, summary), {"keywords": [], "areas": []}
 
 
-# ── Streamlit UI ──────────────────────────────────────────────────────────────
-st.title("💬 Merchant Chatbot")
-st.caption("Ask me about our merchant partners, deals, and outlet locations!")
-
-st.markdown("""
-<style>
-[data-testid="stChatMessage"] { max-width: 100% !important; }
-[data-testid="stMarkdownContainer"] p { white-space: pre-wrap; word-break: break-word; }
-</style>
-""", unsafe_allow_html=True)
-
-# Load data
-data, unique_merchants, keyword_index, valid_names, valid_keywords = load_and_process_database()
-
-# Initialise chat history
+# ── Session state ─────────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": (
-            f"Hi there! 👋 I can help you find merchants and deals.\n\n"
-            f"We have **{len(unique_merchants)} merchants** in our programme. Try asking:\n"
-            "🔍 'Show me food deals' or 'spa merchants'\n"
-            "📍 'Restaurants near Orchard' or 'deals in Tampines'\n"
-            "🥩 'List me halal food' or 'halal merchants'\n"
-            "🏪 'Is 4Fingers our merchant?'\n"
-            "📋 'Old Chang Kee outlets'"
-        )
-    })
-
-# Initialise search context memory
 if "last_search_context" not in st.session_state:
-    st.session_state.last_search_context = {"keywords": [], "areas": []}
+    st.session_state.last_search_context = None
 
-# Display chat history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+# ── Chat display ──────────────────────────────────────────────────────────────
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# Handle user input
-if prompt := st.chat_input("Ask me about merchants, deals, or locations..."):
+# ── Chat input ────────────────────────────────────────────────────────────────
+if prompt := st.chat_input("Ask me about our merchants..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Looking that up..."):
-            response = handle_user_query(
-                prompt, data, unique_merchants, keyword_index,
-                last_context=st.session_state.last_search_context
+        with st.spinner("Thinking..."):
+            response, new_context = handle_user_query(
+                prompt, last_context=st.session_state.last_search_context
             )
+            st.session_state.last_search_context = new_context
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
