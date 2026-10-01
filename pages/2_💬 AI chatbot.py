@@ -27,6 +27,26 @@ FALLBACK_PROMPTS = (
     "- *List halal merchants near Tampines*"
 )
 
+WELCOME_MESSAGE = (
+    "👋 Hi! I'm your Merchant Chatbot. Here are some things you can ask me — feel free to copy and paste!\n\n"
+    "---\n"
+    "🔍 **Browse merchants**\n"
+    "> List all merchants\n\n"
+    "📍 **Search by area**\n"
+    "> Show me merchants in Tampines\n\n"
+    "> Show me merchants in the North\n\n"
+    "🍽️ **Search by category**\n"
+    "> Show me food merchants\n\n"
+    "> Any bubble tea merchants?\n\n"
+    "🕌 **Halal options**\n"
+    "> List halal merchants near Jurong\n\n"
+    "🏪 **Check a specific merchant**\n"
+    "> Is Old Chang Kee our merchant?\n\n"
+    "> Old Chang Kee outlets\n\n"
+    "---\n"
+    "_Type your question below or copy one of the prompts above!_"
+)
+
 MULTI_WORD_PHRASES = [
     "bubble tea", "ice cream", "escape room", "hot pot", "hot dogs",
     "fried chicken", "fish and chips", "dim sum", "char kway teow",
@@ -74,10 +94,8 @@ SG_REGIONS = {
         "whampoa", "bendemeer", "boon keng", "farrer park", "dhoby",
     ],
     "north": [
-        # North proper
         "yishun", "khatib", "yio chu kang", "ang mo kio", "amk", "sembawang",
         "canberra", "admiralty", "woodlands", "marsiling", "kranji",
-        # Former North East — merged in
         "punggol", "sengkang", "buangkok", "hougang", "kovan", "serangoon north",
         "compassvale", "rivervale", "fernvale", "northshore",
     ],
@@ -99,35 +117,29 @@ SG_REGIONS = {
 }
 
 POSTAL_DISTRICT_REGION = {
-    # Central
     "01": "central", "02": "central", "03": "central", "04": "central",
     "05": "central", "06": "central", "07": "central", "08": "central",
     "09": "central", "10": "central", "11": "central", "12": "central",
     "13": "central", "14": "central", "15": "central", "16": "central",
     "17": "central", "18": "central", "19": "central", "20": "central",
     "21": "central", "22": "central", "23": "central",
-    # South
     "24": "south", "25": "south", "26": "south", "27": "south",
     "28": "south", "29": "south", "30": "south",
     "31": "south", "32": "south", "33": "south",
-    # East
     "34": "east", "35": "east", "36": "east", "37": "east",
     "38": "east", "39": "east", "40": "east", "41": "east",
     "42": "east", "43": "east", "44": "east", "45": "east",
     "46": "east", "47": "east", "48": "east",
     "49": "east", "50": "east", "51": "east", "52": "east",
-    # North (includes former North East postal districts 53–57, 79–84)
     "53": "north", "54": "north", "55": "north",
     "56": "north", "57": "north",
-    "79": "north", "80": "north",
-    "81": "north", "82": "north", "83": "north", "84": "north",
-    # West
     "60": "west", "61": "west", "62": "west", "63": "west", "64": "west",
     "65": "west", "66": "west", "67": "west", "68": "west", "69": "west",
     "70": "west", "71": "west",
-    # North
     "72": "north", "73": "north", "74": "north", "75": "north", "76": "north",
     "77": "north", "78": "north",
+    "79": "north", "80": "north",
+    "81": "north", "82": "north", "83": "north", "84": "north",
 }
 
 REGION_EMOJI = {
@@ -208,28 +220,24 @@ unique_merchants = sorted(df["name"].dropna().unique().tolist())
 
 # ── Helper functions ──────────────────────────────────────────────────────────
 
-def format_description(desc):
+def format_description_lines(desc):
+    """Returns (header_line, [subsequent_lines]) — caller handles 🎁 placement."""
     if not desc:
-        return ""
+        return "", []
     lines = [l.strip() for l in desc.splitlines() if l.strip()]
-    if len(lines) <= 1:
-        return desc
-    result = [f"**{lines[0]}**"]
-    for line in lines[1:]:
-        result.append(line)
-    return "  \n   ".join(result)
+    if not lines:
+        return "", []
+    header = f"**{lines[0]}**"
+    rest = lines[1:]
+    return header, rest
 
 def get_region_for_address(address, postal=""):
     addr_lower = address.lower()
-
-    # 1. Keyword matching — South checked before West to avoid VivoCity/Harbourfront clash
     region_order = ["central", "north", "east", "south", "west"]
     for region in region_order:
         areas = SG_REGIONS.get(region, [])
         if any(area in addr_lower for area in areas):
             return region
-
-    # 2. Postal code fallback
     code = postal.strip() if postal else ""
     if not code:
         m = re.search(r"S\((\d{6})\)|(?<!\d)(\d{6})(?!\d)", address)
@@ -239,7 +247,6 @@ def get_region_for_address(address, postal=""):
         district = code[:2]
         if district in POSTAL_DISTRICT_REGION:
             return POSTAL_DISTRICT_REGION[district]
-
     return "other"
 
 def extract_search_terms(query):
@@ -268,14 +275,12 @@ def extract_search_terms(query):
         else:
             non_area_terms.append(phrase)
 
-    # Expand region names to specific area lists
     region_map = {
-        "central": SG_REGIONS["central"],
-        "north":   SG_REGIONS["north"],
-        "south":   SG_REGIONS["south"],
-        "east":    SG_REGIONS["east"],
-        "west":    SG_REGIONS["west"],
-        # "north east" / "northeast" now fold into north
+        "central":    SG_REGIONS["central"],
+        "north":      SG_REGIONS["north"],
+        "south":      SG_REGIONS["south"],
+        "east":       SG_REGIONS["east"],
+        "west":       SG_REGIONS["west"],
         "northeast":  SG_REGIONS["north"],
         "north east": SG_REGIONS["north"],
     }
@@ -353,32 +358,48 @@ def format_keyword_list(results, total_count):
     if not results:
         return FALLBACK_PROMPTS
 
-    lines = [f"Here are merchants matching your search ({min(len(results), 10)} shown):\n"]
+    count = min(len(results), 10)
+    lines = [f"Here are the top {count} merchants matching your search, ranked by relevance:\n"]
+
     for row in results:
         name = row["name"]
         address = row.get("address", "")
         postal = row.get("postalC", "")
         postal_str = f" S({postal})" if postal else ""
-        desc = format_description(row.get("description", ""))
+        raw_desc = row.get("description", "")
         outlet_count = count_all_outlets(name)
 
-        lines.append(f"**{name}**")
+        # ── Merchant name as a heading so it stands out ──
+        lines.append(f"#### 🏪 {name}")
         lines.append(f"📍 {address}{postal_str}")
-        if desc:
+
+        # ── Description: 🎁 always on same line as header ──
+        if raw_desc:
+            header_line, rest_lines = format_description_lines(raw_desc)
             lines.append("")
-            lines.append(f"🎁 {desc}")
+            lines.append(f"🎁 {header_line}")
+            for rl in rest_lines:
+                lines.append(f"   {rl}")
+
         if outlet_count > 1:
             lines.append("")
             lines.append(
                 f"ℹ️ This merchant has {outlet_count} outlets in total. "
                 f"Ask me which area you're looking at, or try '*{name} outlets*' to see all locations."
             )
+
+        lines.append("")
+        lines.append("---")
         lines.append("")
 
-    if total_count == 10:
-        lines.append("_Showing first 10 results. Try a more specific search to narrow down!_")
+    if total_count >= 10:
+        lines.append(
+            "_Showing top 10 results by relevance — there may be more. "
+            "Try a more specific search to narrow down!_"
+        )
 
     return "\n".join(lines)
+
 
 def format_outlet_list(outlets_df, merchant_name, area_filter=None):
     if area_filter:
@@ -402,9 +423,12 @@ def format_outlet_list(outlets_df, merchant_name, area_filter=None):
     descs = outlets_df["description"].str.strip().unique()
     shared_desc = descs[0] if len(descs) == 1 and descs[0] else None
     if shared_desc:
-        lines.append(f"🎁 {format_description(shared_desc)}\n")
+        header_line, rest_lines = format_description_lines(shared_desc)
+        lines.append(f"🎁 {header_line}")
+        for rl in rest_lines:
+            lines.append(f"   {rl}")
+        lines.append("")
 
-    # Group by region — 4 cardinal + Central + Other
     region_buckets: dict[str, list] = {}
     for _, row in outlets_df.iterrows():
         region = get_region_for_address(row.get("address", ""), row.get("postalC", ""))
@@ -423,10 +447,14 @@ def format_outlet_list(outlets_df, merchant_name, area_filter=None):
             desc = row.get("description", "").strip()
             lines.append(f"• {address}{postal_str}")
             if desc and not shared_desc:
+                header_line, rest_lines = format_description_lines(desc)
                 lines.append("")
-                lines.append(f"  🎁 {format_description(desc)}")
+                lines.append(f"  🎁 {header_line}")
+                for rl in rest_lines:
+                    lines.append(f"     {rl}")
 
     return "\n".join(lines)
+
 
 def safe_llm_call(prompt):
     try:
@@ -487,10 +515,13 @@ def handle_user_query(query, last_context=None):
                     address = row.get("address", "")
                     postal = row.get("postalC", "")
                     postal_str = f" S({postal})" if postal else ""
-                    desc = format_description(row.get("description", ""))
+                    raw_desc = row.get("description", "")
                     resp = f"✅ Yes, **{name}** is one of our merchants!\n\n📍 {address}{postal_str}"
-                    if desc:
-                        resp += f"\n\n🎁 {desc}"
+                    if raw_desc:
+                        header_line, rest_lines = format_description_lines(raw_desc)
+                        resp += f"\n\n🎁 {header_line}"
+                        for rl in rest_lines:
+                            resp += f"\n   {rl}"
                     return resp, {"keywords": [], "areas": []}
                 else:
                     return (
@@ -530,7 +561,9 @@ def handle_user_query(query, last_context=None):
 
 # ── Session state ─────────────────────────────────────────────────────────────
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {"role": "assistant", "content": WELCOME_MESSAGE}
+    ]
 if "last_search_context" not in st.session_state:
     st.session_state.last_search_context = None
 
