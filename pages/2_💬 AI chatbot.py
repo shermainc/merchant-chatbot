@@ -6,9 +6,6 @@ from datetime import datetime
 from helper_functions.llm import get_completion_by_messages
 from helper_functions.utility import check_password  
 
-# Enforce secure access control
-if not check_password():  
-    st.stop()
 
 # ── Constants ────────────────────────────────────────────────────────────────
 CSV_FILE_PATH = "pages/merchants.csv"
@@ -367,6 +364,30 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
 
 
 # ── Streamlit UI ──────────────────────────────────────────────────────────────
+
+
+# ── Password protection ───────────────────────────────────────────────────────
+def check_password():
+    """Returns True if the user has entered the correct password."""
+    if "password_correct" not in st.session_state:
+        st.session_state.password_correct = False
+
+    if st.session_state.password_correct:
+        return True
+
+    st.title("🔒 Merchant Chatbot")
+    pwd = st.text_input("Enter password to continue:", type="password")
+    if pwd:
+        if pwd == st.secrets["APP_PASSWORD"]:
+            st.session_state.password_correct = True
+            st.rerun()
+        else:
+            st.error("❌ Incorrect password. Please try again.")
+    return False
+
+if not check_password():
+    st.stop()
+    
 st.title("💬 Merchant Chatbot")
 st.caption("Ask me about our merchant partners, deals, and outlet locations!")
 
