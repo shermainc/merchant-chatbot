@@ -31,6 +31,7 @@ STOPWORDS = {
     "halal", "food",
 }
 
+# ── Singapore area keywords (MRT / neighbourhood names) ──────────────────────
 AREA_KEYWORDS = {
     "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
     "marina bay", "bugis", "lavender", "kallang", "tampines", "bedok",
@@ -49,11 +50,59 @@ AREA_KEYWORDS = {
     "holland village", "one north", "queenstown", "redhill", "tiong bahru",
     "outram", "chinatown", "clarke quay", "fort canning", "bras basah",
     "esplanade", "promenade", "bayfront", "downtown", "telok ayer",
-    "tanjong pagar", "harbourfront", "sentosa", "punggol", "sengkang",
+    "tanjong pagar", "sentosa", "punggol", "sengkang",
     "buangkok", "compassvale", "rivervale", "fernvale", "anchorvale",
     "balestier", "geylang", "ubi", "macpherson", "tai seng", "bartley",
-    "upper changi", "expo", "changi", "loyang", "pasir ris",
+    "upper changi", "expo", "changi", "loyang",
 }
+
+# ── Region → list of area keywords ───────────────────────────────────────────
+SG_REGIONS = {
+    "central": [
+        "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
+        "marina bay", "bugis", "lavender", "kallang", "little india", "rochor",
+        "dhoby", "novena", "newton", "stevens", "bishan", "braddell", "toa payoh",
+        "boon keng", "farrer park", "potong pasir", "woodleigh", "balestier",
+        "queenstown", "redhill", "tiong bahru", "outram", "chinatown",
+        "clarke quay", "fort canning", "bras basah", "esplanade", "promenade",
+        "bayfront", "downtown", "telok ayer", "tanjong pagar", "geylang",
+        "ubi", "macpherson", "tai seng", "bartley", "botanic gardens",
+        "caldecott", "marymount", "botanic", "holland village",
+    ],
+    "north": [
+        "yishun", "khatib", "yio chu kang", "admiralty", "sembawang",
+        "canberra", "woodlands", "marsiling", "kranji",
+    ],
+    "north east": [
+        "sengkang", "punggol", "buangkok", "compassvale", "rivervale",
+        "fernvale", "anchorvale", "hougang", "serangoon", "kovan",
+        "ang mo kio",
+    ],
+    "northeast": [
+        "sengkang", "punggol", "buangkok", "compassvale", "rivervale",
+        "fernvale", "anchorvale", "hougang", "serangoon", "kovan",
+        "ang mo kio",
+    ],
+    "east": [
+        "tampines", "bedok", "pasir ris", "simei", "tanah merah",
+        "kembangan", "eunos", "paya lebar", "aljunied", "upper changi",
+        "expo", "changi", "loyang",
+    ],
+    "west": [
+        "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
+        "dover", "buona vista", "one-north", "one north", "kent ridge",
+        "haw par villa", "pasir panjang", "labrador park", "harbourfront",
+        "vivocity", "bukit panjang", "choa chu kang", "yew tee",
+        "bukit batok", "bukit gombak", "hillview", "beauty world",
+        "king albert park", "sixth avenue", "tan kah kee",
+    ],
+    "south": [
+        "harbourfront", "vivocity", "labrador park", "sentosa",
+        "haw par villa", "pasir panjang", "telok ayer", "tanjong pagar",
+        "chinatown", "outram", "tiong bahru", "redhill",
+    ],
+}
+
 
 FALLBACK_PROMPTS = (
     "I'm sorry, I'm not sure what you're looking for! Here are some things you can try:\n\n"
@@ -119,21 +168,37 @@ def is_deal_valid(row):
 
 
 # ── Search helpers ────────────────────────────────────────────────────────────
+
 def extract_search_terms(query):
-    words = re.findall(r"[a-zA-Z0-9']+", query.lower())
-    area_found = None
-    filtered = []
-    for word in words:
-        if word in AREA_KEYWORDS:
-            area_found = word
-        elif word not in STOPWORDS:
-            filtered.append(word)
-    # Also check two-word area phrases
-    text_lower = query.lower()
-    for area in AREA_KEYWORDS:
-        if " " in area and area in text_lower:
-            area_found = area
-    return filtered, area_found
+    q_lower = query.lower()
+
+    areas = []
+
+    # 1. Check for region phrases first (multi-word, e.g. "north east")
+    for region, sub_areas in SG_REGIONS.items():
+        if region in q_lower:
+            for a in sub_areas:
+                if a not in areas:
+                    areas.append(a)
+
+    # 2. Check for multi-word area names (e.g. "raffles place", "ang mo kio")
+    for area in sorted(AREA_KEYWORDS, key=len, reverse=True):  # longest first
+        if area in q_lower and area not in areas:
+            areas.append(area)
+
+    # 3. Keywords = words not in stopwords, not an area keyword, length > 2
+    words = re.findall(r"\b\w+\b", q_lower)
+    area_words = set(w for a in areas for w in a.split())
+    keywords = [
+        w for w in words
+        if w not in STOPWORDS
+        and w not in area_words
+        and w not in SG_REGIONS
+        and len(w) > 2
+    ]
+
+    return keywords, areas
+
 
 
 def is_halal_query(query):
