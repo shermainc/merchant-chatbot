@@ -220,6 +220,17 @@ unique_merchants = sorted(df["name"].dropna().unique().tolist())
 
 # ── Helper functions ──────────────────────────────────────────────────────────
 
+def normalise(text: str) -> str:
+    """Lowercase, collapse whitespace, strip punctuation for fuzzy matching."""
+    text = text.lower()
+    # Replace & with "and" so "Fish & Co" == "fish and co"
+    text = text.replace("&", "and")
+    # Remove punctuation except spaces
+    text = re.sub(r"[^\w\s]", "", text)
+    # Collapse multiple spaces
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
 def format_description_lines(desc):
     """Returns (header_line, [subsequent_lines]) — caller handles 🎁 placement."""
     if not desc:
@@ -308,6 +319,46 @@ def find_all_outlets(name):
 def count_all_outlets(name):
     return len(find_all_outlets(name))
 
+# ── Outlet detection: robust to special characters like & ────────────────────
+def detect_outlet_query(query: str):
+    """
+    Returns (merchant_name, area_filter) if the query is asking for outlets
+    of a specific merchant, else (None, None).
+
+    Handles names with special characters like '&', '.', '-'.
+    Strategy: check if any known merchant name (normalised) appears in the
+    normalised query AND the query contains the word 'outlet(s)'.
+    """
+    q_norm = normalise(query)
+    if "outlet" not in q_norm:
+        return None, None
+
+    # Remove the word "outlets" / "outlet" and trailing area phrase from normalised query
+    # to isolate the merchant name portion
+    # Try to match each known merchant name against the normalised query
+    best_match = None
+    best_len = 0
+    for name in unique_merchants:
+        name_norm = normalise(name)
+        if name_norm in q_norm:
+            if len(name_norm) > best_len:
+                best_match = name
+                best_len = len(name_norm)
+
+    if not best_match:
+        return None, None
+
+    # Extract area filter: text after "outlets" / "outlet" in the original query
+    area_filter = None
+    area_match = re.search(
+        r"outlets?\s+(?:in|at|near|around)\s+(.+)$", query, re.IGNORECASE
+    )
+    if area_match:
+        area_filter = area_match.group(1).strip()
+
+    return best_match, area_filter
+
+
 # ── Scoring-based search ──────────────────────────────────────────────────────
 def list_merchants_by_keyword(keywords, areas, halal_only=False):
     if keywords:
@@ -369,11 +420,9 @@ def format_keyword_list(results, total_count):
         raw_desc = row.get("description", "")
         outlet_count = count_all_outlets(name)
 
-        # ── Merchant name as a heading so it stands out ──
         lines.append(f"#### 🏪 {name}")
         lines.append(f"📍 {address}{postal_str}")
 
-        # ── Description: 🎁 always on same line as header ──
         if raw_desc:
             header_line, rest_lines = format_description_lines(raw_desc)
             lines.append("")
@@ -482,6 +531,7 @@ def build_llm_context(candidate_names: list[str]) -> str:
 
 def handle_user_query(query, last_context=None):
     q = query.lower().strip()
+    q_norm = normalise(query)
     halal = is_halal_query(q)
 
     # ── List all merchants ────────────────────────────────────────────────────
@@ -494,20 +544,17 @@ def handle_user_query(query, last_context=None):
         result += "\n\n_Specify a region or category to narrow down, e.g. 'food merchants in Tampines'._"
         return result, {"keywords": [], "areas": []}
 
-    # ── Outlet listing ────────────────────────────────────────────────────────
-    outlet_match = re.search(
-        r"(.+?)\s+outlets?(?:\s+in\s+(.+))?$", q, re.IGNORECASE
-    )
-    if outlet_match:
-        name_candidate = outlet_match.group(1).strip()
-        area_filter = outlet_match.group(2).strip() if outlet_match.group(2) else None
-        matched = find_all_outlets(name_candidate)
-        if not matched.empty:
-            return format_outlet_list(matched, matched.iloc[0]["name"], area_filter), {"keywords": [], "areas": []}
+    # ── Outlet listing (robust to special chars like &) ───────────────────────
+    matched_name, area_filter = detect_outlet_query(query)
+    if matched_name:
+        outlets = find_all_outlets(matched_name)
+        if not outlets.empty:
+            return format_outlet_list(outlets, matched_name, area_filter), {"keywords": [], "areas": []}
 
-    # ── Merchant name check ───────────────────────────────────────────────────
+    # ── Merchant name check (normalised comparison) ───────────────────────────
     for name in unique_merchants:
-        if name.lower() in q:
+        name_norm = normalise(name)
+        if name_norm in q_norm:
             rows = find_merchant_by_name(name)
             if not rows.empty:
                 if len(rows) == 1:
