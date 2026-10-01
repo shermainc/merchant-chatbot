@@ -7,7 +7,7 @@ from helper_functions.utility import check_password
 if not check_password():
     st.stop()
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Merchant Chatbot", page_icon="🛍️")
 st.title("🛍️ Merchant Chatbot")
 st.caption("Ask me about our merchants, deals, and locations!")
@@ -31,7 +31,6 @@ MULTI_WORD_PHRASES = [
     "bubble tea", "ice cream", "escape room", "hot pot", "hot dogs",
     "fried chicken", "fish and chips", "dim sum", "char kway teow",
     "bak kut teh", "nasi lemak", "laksa", "chicken rice",
-    "north east", "north west",
 ]
 
 AREA_KEYWORDS = {
@@ -44,10 +43,9 @@ AREA_KEYWORDS = {
     "little india", "lavender", "kallang", "aljunied", "geylang", "paya lebar",
     "macpherson", "tai seng", "potong pasir", "woodleigh", "serangoon",
     "whampoa", "bendemeer", "boon keng", "farrer park", "dhoby",
-    # North
+    # North (includes former North East)
     "yishun", "khatib", "yio chu kang", "ang mo kio", "amk", "sembawang",
     "canberra", "admiralty", "woodlands", "marsiling", "kranji",
-    # North East
     "punggol", "sengkang", "buangkok", "hougang", "kovan", "serangoon north",
     "compassvale", "rivervale", "fernvale", "northshore",
     # East
@@ -76,10 +74,10 @@ SG_REGIONS = {
         "whampoa", "bendemeer", "boon keng", "farrer park", "dhoby",
     ],
     "north": [
+        # North proper
         "yishun", "khatib", "yio chu kang", "ang mo kio", "amk", "sembawang",
         "canberra", "admiralty", "woodlands", "marsiling", "kranji",
-    ],
-    "north east": [
+        # Former North East — merged in
         "punggol", "sengkang", "buangkok", "hougang", "kovan", "serangoon north",
         "compassvale", "rivervale", "fernvale", "northshore",
     ],
@@ -87,16 +85,16 @@ SG_REGIONS = {
         "tampines", "simei", "tanah merah", "bedok", "kembangan", "eunos",
         "changi", "expo", "pasir ris", "loyang", "upper changi",
     ],
-    "south": [
-        "harbourfront", "vivocity", "sentosa", "labrador park",
-        "pasir panjang", "west coast", "telok blangah",
-    ],
     "west": [
         "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
         "dover", "one-north", "one north", "kent ridge", "haw par villa",
         "bukit panjang", "choa chu kang", "yew tee", "bukit batok",
         "bukit gombak", "hillview", "beauty world", "king albert park",
         "sixth avenue", "tan kah kee",
+    ],
+    "south": [
+        "harbourfront", "vivocity", "sentosa", "labrador park",
+        "pasir panjang", "west coast", "telok blangah",
     ],
 }
 
@@ -118,11 +116,11 @@ POSTAL_DISTRICT_REGION = {
     "42": "east", "43": "east", "44": "east", "45": "east",
     "46": "east", "47": "east", "48": "east",
     "49": "east", "50": "east", "51": "east", "52": "east",
-    # North East
-    "53": "north east", "54": "north east", "55": "north east",
-    "56": "north east", "57": "north east",
-    "79": "north east", "80": "north east",
-    "81": "north east", "82": "north east", "83": "north east", "84": "north east",
+    # North (includes former North East postal districts 53–57, 79–84)
+    "53": "north", "54": "north", "55": "north",
+    "56": "north", "57": "north",
+    "79": "north", "80": "north",
+    "81": "north", "82": "north", "83": "north", "84": "north",
     # West
     "60": "west", "61": "west", "62": "west", "63": "west", "64": "west",
     "65": "west", "66": "west", "67": "west", "68": "west", "69": "west",
@@ -134,12 +132,11 @@ POSTAL_DISTRICT_REGION = {
 
 REGION_EMOJI = {
     "central": "🏙️ Central",
-    "north": "🧭 North",
-    "north east": "🧭 North East",
-    "east": "🌅 East",
-    "west": "🌇 West",
-    "south": "⚓ South",
-    "other": "📍 Other",
+    "north":   "🧭 North",
+    "east":    "🌅 East",
+    "west":    "🌇 West",
+    "south":   "⚓ South",
+    "other":   "📍 Other",
 }
 
 STOPWORDS = {
@@ -166,16 +163,6 @@ from datetime import datetime
 
 def is_deal_valid(row):
     today = datetime.today()
-    for col in ["startDate", "endDate"]:
-        val = str(row.get(col, "")).strip()
-        if not val:
-            return True
-        for fmt in ["%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d"]:
-            try:
-                datetime.strptime(val, fmt)
-                break
-            except ValueError:
-                continue
     end_val = str(row.get("endDate", "")).strip()
     if not end_val:
         return True
@@ -236,13 +223,13 @@ def get_region_for_address(address, postal=""):
     addr_lower = address.lower()
 
     # 1. Keyword matching — South checked before West to avoid VivoCity/Harbourfront clash
-    region_order = ["central", "north", "north east", "east", "south", "west"]
+    region_order = ["central", "north", "east", "south", "west"]
     for region in region_order:
         areas = SG_REGIONS.get(region, [])
         if any(area in addr_lower for area in areas):
             return region
 
-    # 2. Postal code fallback — use postalC column value directly
+    # 2. Postal code fallback
     code = postal.strip() if postal else ""
     if not code:
         m = re.search(r"S\((\d{6})\)|(?<!\d)(\d{6})(?!\d)", address)
@@ -281,15 +268,16 @@ def extract_search_terms(query):
         else:
             non_area_terms.append(phrase)
 
-    # Expand region names
+    # Expand region names to specific area lists
     region_map = {
         "central": SG_REGIONS["central"],
-        "north": SG_REGIONS["north"],
-        "south": SG_REGIONS["south"],
-        "east": SG_REGIONS["east"],
-        "west": SG_REGIONS["west"],
-        "northeast": SG_REGIONS["north east"],
-        "north east": SG_REGIONS["north east"],
+        "north":   SG_REGIONS["north"],
+        "south":   SG_REGIONS["south"],
+        "east":    SG_REGIONS["east"],
+        "west":    SG_REGIONS["west"],
+        # "north east" / "northeast" now fold into north
+        "northeast":  SG_REGIONS["north"],
+        "north east": SG_REGIONS["north"],
     }
     expanded_areas = []
     for a in area_found:
@@ -315,48 +303,51 @@ def find_all_outlets(name):
 def count_all_outlets(name):
     return len(find_all_outlets(name))
 
+# ── Scoring-based search ──────────────────────────────────────────────────────
 def list_merchants_by_keyword(keywords, areas, halal_only=False):
-    candidate_sets = []
-
     if keywords:
+        kw_scores: dict[int, int] = {}
         for kw in keywords:
-            matched = set()
+            kw_lower = kw.lower()
             for idx_kw, indices in keyword_index.items():
-                if kw in idx_kw or idx_kw in kw:
-                    matched.update(indices)
-            candidate_sets.append(matched)
-        if candidate_sets:
-            combined = candidate_sets[0]
-            for s in candidate_sets[1:]:
-                combined = combined.intersection(s)
-        else:
-            combined = set()
+                if kw_lower in idx_kw or idx_kw in kw_lower:
+                    for i in indices:
+                        kw_scores[i] = kw_scores.get(i, 0) + 1
+        candidate_indices = set(kw_scores.keys())
     else:
-        combined = set(df.index.tolist())
+        kw_scores = {i: 0 for i in df.index}
+        candidate_indices = set(df.index.tolist())
 
     if areas:
-        area_indices = set()
+        area_indices: set[int] = set()
         for area in areas:
+            area_lower = area.lower()
             for idx_kw, indices in keyword_index.items():
-                if area in idx_kw or idx_kw in area:
+                if area_lower in idx_kw or idx_kw in area_lower:
                     area_indices.update(indices)
-        combined = combined.intersection(area_indices)
+        candidate_indices = candidate_indices & area_indices
 
-    results = df.loc[list(combined)]
+    if not candidate_indices:
+        return [], 0
 
+    results = df.loc[sorted(candidate_indices)].copy()
     if halal_only:
         results = results[results["Halal"].str.strip().str.lower() == "yes"]
 
-    seen_names = set()
-    unique_results = []
-    for _, row in results.iterrows():
-        name = row["name"]
-        if name not in seen_names:
-            seen_names.add(name)
-            unique_results.append(row)
+    if results.empty:
+        return [], 0
 
-    unique_results.sort(key=lambda r: r["name"])
-    return unique_results[:10], len(unique_results)
+    seen: dict[str, dict] = {}
+    for i, row in results.iterrows():
+        name = row["name"]
+        score = kw_scores.get(i, 0)
+        if name not in seen or score > seen[name]["_score"]:
+            seen[name] = {**row.to_dict(), "_score": score}
+
+    ranked = sorted(seen.values(), key=lambda r: (-r["_score"], r["name"]))
+    total = len(ranked)
+    return ranked[:10], total
+
 
 def format_keyword_list(results, total_count):
     if not results:
@@ -374,6 +365,7 @@ def format_keyword_list(results, total_count):
         lines.append(f"**{name}**")
         lines.append(f"📍 {address}{postal_str}")
         if desc:
+            lines.append("")
             lines.append(f"🎁 {desc}")
         if outlet_count > 1:
             lines.append("")
@@ -407,19 +399,18 @@ def format_outlet_list(outlets_df, merchant_name, area_filter=None):
     if note:
         lines.append(note)
 
-    # Check if all outlets share the same description
     descs = outlets_df["description"].str.strip().unique()
     shared_desc = descs[0] if len(descs) == 1 and descs[0] else None
     if shared_desc:
         lines.append(f"🎁 {format_description(shared_desc)}\n")
 
-    # Group by region
-    region_buckets = {}
+    # Group by region — 4 cardinal + Central + Other
+    region_buckets: dict[str, list] = {}
     for _, row in outlets_df.iterrows():
         region = get_region_for_address(row.get("address", ""), row.get("postalC", ""))
         region_buckets.setdefault(region, []).append(row)
 
-    region_order = ["central", "north", "north east", "east", "west", "south", "other"]
+    region_order = ["central", "north", "east", "west", "south", "other"]
     for region in region_order:
         rows = region_buckets.get(region, [])
         if not rows:
@@ -432,19 +423,34 @@ def format_outlet_list(outlets_df, merchant_name, area_filter=None):
             desc = row.get("description", "").strip()
             lines.append(f"• {address}{postal_str}")
             if desc and not shared_desc:
+                lines.append("")
                 lines.append(f"  🎁 {format_description(desc)}")
 
     return "\n".join(lines)
 
-def safe_llm_call(prompt, context):
+def safe_llm_call(prompt):
     try:
-        response = get_completion(prompt)
-        return response
+        return get_completion(prompt)
     except Exception as e:
         err = str(e).lower()
-        if "rate" in err or "token" in err or "limit" in err or "quota" in err:
+        if any(w in err for w in ("rate", "token", "limit", "quota")):
             return FALLBACK_PROMPTS
         return FALLBACK_PROMPTS
+
+# ── Token-budgeted LLM context ────────────────────────────────────────────────
+MAX_LLM_CONTEXT_TOKENS = 1500
+
+def build_llm_context(candidate_names: list[str]) -> str:
+    lines = []
+    running = 0
+    for name in candidate_names:
+        chunk = f"- {name}\n"
+        cost = count_tokens(chunk)
+        if running + cost > MAX_LLM_CONTEXT_TOKENS:
+            break
+        lines.append(chunk)
+        running += cost
+    return "We have the following merchants:\n" + "".join(lines)
 
 def handle_user_query(query, last_context=None):
     q = query.lower().strip()
@@ -508,19 +514,18 @@ def handle_user_query(query, last_context=None):
         else:
             return FALLBACK_PROMPTS, {"keywords": keywords, "areas": areas}
 
-    # ── LLM fallback ──────────────────────────────────────────────────────────
-    merchant_names = ", ".join(unique_merchants[:50])
-    summary = f"We have the following merchants: {merchant_names}."
-    if count_tokens(summary) > 3000:
-        summary = f"We have the following merchants: {', '.join(unique_merchants[:15])}."
+    # ── LLM fallback (token-budgeted) ─────────────────────────────────────────
+    kw_candidates, _ = list_merchants_by_keyword(keywords, [], halal_only=False)
+    candidate_names = [r["name"] for r in kw_candidates] if kw_candidates else unique_merchants
 
+    context = build_llm_context(candidate_names)
     prompt = (
         f"You are a helpful merchant chatbot. Answer based only on this information:\n\n"
-        f"{summary}\n\n"
+        f"{context}\n\n"
         f"User question: {query}\n\n"
         f"If you do not know, say 'I do not know'."
     )
-    return safe_llm_call(prompt, summary), {"keywords": [], "areas": []}
+    return safe_llm_call(prompt), {"keywords": [], "areas": []}
 
 
 # ── Session state ─────────────────────────────────────────────────────────────
