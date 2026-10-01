@@ -27,11 +27,7 @@ st.markdown("""
 
 # ── Constants ────────────────────────────────────────────────────────────────
 MAX_LLM_CONTEXT_TOKENS = 1500
-FALLBACK_PROMPTS = (
-    "I'm sorry, I do not know the answer to that. "
-    "Try asking about a specific merchant, category, or area — "
-    "for example: *'Show me food merchants in Orchard'* or *'Old Chang Kee outlets'*."
-)
+FALLBACK_PROMPTS = "I'm sorry, I do not know the answer to that."
 
 WELCOME_MESSAGE = """
 👋 Hi! I'm your Merchant AI Assistant. Here's what I can help you with:
@@ -184,16 +180,16 @@ def is_deal_valid(row):
 
 df = load_data()
 
-# ── Keyword index ─────────────────────────────────────────────────────────────
+# ── Keyword index — Keywords column ONLY ─────────────────────────────────────
+# FIX 1: Index built from Keywords column only (not description or name)
+# so that searches are strict — a merchant only appears if the term is
+# explicitly tagged in their Keywords field.
 @st.cache_data
 def build_keyword_index(df):
     index = {}
     for i, row in df.iterrows():
         kw_field = str(row.get("Keywords", "")).lower()
-        desc_field = str(row.get("description", "")).lower()
-        name_field = str(row.get("name", "")).lower()
-        combined = f"{kw_field} {desc_field} {name_field}"
-        for token in re.findall(r"[a-z0-9&']+", combined):
+        for token in re.findall(r"[a-z0-9&']+", kw_field):
             index.setdefault(token, []).append(i)
     return index
 
@@ -286,7 +282,6 @@ def format_description_lines(raw_desc):
 def detect_outlet_query(query):
     q_norm = normalise(query)
     merchant_names = df["name"].unique().tolist()
-    # FIX 2: Added "store" and "stores" to outlet triggers
     outlet_triggers = ["outlet", "outlets", "store", "stores", "branch", "branches", "location", "locations", "where"]
     if not any(t in q_norm for t in outlet_triggers):
         return None, None
@@ -320,7 +315,6 @@ def format_outlet_list(merchant_name, outlets_df, area_filter=None):
     else:
         lines = [f"**{merchant_name}** has {len(outlets_df)} outlet(s):", ""]
 
-    # Check if all outlets share the same description
     descs = outlets_df["description"].unique()
     shared_desc = descs[0] if len(descs) == 1 and descs[0] else None
     if shared_desc:
@@ -356,7 +350,7 @@ def format_outlet_list(merchant_name, outlets_df, area_filter=None):
         if not rows:
             continue
         lines.append(f"**{region_labels[region_key]}**")
-        lines.append("")   # FIX 1: blank line so address renders on its own line
+        lines.append("")
         for row in rows:
             addr = str(row.get("address", "")).strip()
             postal = str(row.get("postalC", "")).strip()
@@ -381,14 +375,27 @@ def format_outlet_list(merchant_name, outlets_df, area_filter=None):
     return "\n".join(lines).strip()
 
 def list_merchants_by_keyword(query_keywords, query_areas, df, halal_only=False):
+    # FIX 1: Separate single-word keywords from multi-word phrases
+    single_keywords = [kw for kw in query_keywords if " " not in kw]
+    phrase_keywords  = [kw for kw in query_keywords if " " in kw]
+
     scores = {}
-    for kw in query_keywords:
+
+    # Single-word keywords → token index (Keywords column only)
+    for kw in single_keywords:
         matched_indices = set()
         for token, indices in keyword_index.items():
             if kw in token:
                 matched_indices.update(indices)
         for idx in matched_indices:
             scores[idx] = scores.get(idx, 0) + 1
+
+    # Multi-word phrases → direct substring search on Keywords column only
+    for phrase in phrase_keywords:
+        for i, row in df.iterrows():
+            kw_field = str(row.get("Keywords", "")).lower()
+            if phrase in kw_field:
+                scores[i] = scores.get(i, 0) + 1
 
     results = []
     seen_names = set()
@@ -598,13 +605,22 @@ if prompt := st.chat_input("Ask about merchants, deals, or locations..."):
 
         st.markdown(response)
 
-        # FIX 3: Auto-scroll to bottom after each response
+        # FIX 2: Auto-scroll — setTimeout gives Streamlit time to finish
+        # rendering the new message before the scroll fires
         components.html("""
         <script>
-        const chatContainer = window.parent.document.querySelector('[data-testid="stChatMessageContainer"]');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+        function scrollToBottom() {
+            const chatContainer = window.parent.document.querySelector(
+                '[data-testid="stChatMessageContainer"]'
+            );
+            if (chatContainer) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
         }
+        // First attempt after short delay
+        setTimeout(scrollToBottom, 300);
+        // Second attempt in case rendering takes longer
+        setTimeout(scrollToBottom, 800);
         </script>
         """, height=0)
 
