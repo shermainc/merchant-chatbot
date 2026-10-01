@@ -4,7 +4,7 @@ import re
 import os
 from datetime import datetime
 from helper_functions.llm import get_completion_by_messages
-from helper_functions.utility import check_password  
+from helper_functions.utility import check_password
 
 if not check_password():
     st.stop()
@@ -53,7 +53,7 @@ AREA_KEYWORDS = {
     "tanjong pagar", "sentosa", "punggol", "sengkang",
     "buangkok", "compassvale", "rivervale", "fernvale", "anchorvale",
     "balestier", "geylang", "ubi", "macpherson", "tai seng", "bartley",
-    "upper changi", "expo", "changi", "loyang",
+    "upper changi", "expo", "changi", "loyang", "whampoa",
 }
 
 # ── Region → list of area keywords ───────────────────────────────────────────
@@ -67,7 +67,7 @@ SG_REGIONS = {
         "clarke quay", "fort canning", "bras basah", "esplanade", "promenade",
         "bayfront", "downtown", "telok ayer", "tanjong pagar", "geylang",
         "ubi", "macpherson", "tai seng", "bartley", "botanic gardens",
-        "caldecott", "marymount", "botanic", "holland village",
+        "caldecott", "marymount", "botanic", "holland village", "whampoa",
     ],
     "north": [
         "yishun", "khatib", "yio chu kang", "admiralty", "sembawang",
@@ -103,7 +103,6 @@ SG_REGIONS = {
     ],
 }
 
-
 FALLBACK_PROMPTS = (
     "I'm sorry, I'm not sure what you're looking for! Here are some things you can try:\n\n"
     "🔍 **Search by category:** 'Show me food deals', 'spa merchants', 'gym discounts'\n"
@@ -123,9 +122,12 @@ def load_and_process_database():
         for col in df.columns:
             if df[col].dtype == object:
                 df[col] = df[col].fillna("").astype(str).str.strip()
-        data = df.to_dict(orient="records")
 
-        # Deduplicate merchants by name
+        # Pre-filter to valid (active) deals only
+        valid_rows = [row for row in df.to_dict(orient="records") if is_deal_valid(row)]
+        data = valid_rows
+
+        # Deduplicate merchants by name (from valid rows only)
         seen_names = set()
         unique_merchants = []
         for row in data:
@@ -135,7 +137,7 @@ def load_and_process_database():
                 unique_merchants.append(name)
         unique_merchants.sort()
 
-        # Build keyword index: keyword -> list of row indices
+        # Build keyword index from valid rows only
         keyword_index = {}
         for idx, row in enumerate(data):
             raw_keywords = row.get("Keywords", "")
@@ -168,10 +170,8 @@ def is_deal_valid(row):
 
 
 # ── Search helpers ────────────────────────────────────────────────────────────
-
 def extract_search_terms(query):
     q_lower = query.lower()
-
     areas = []
 
     # 1. Check for region phrases first (multi-word, e.g. "north east")
@@ -182,7 +182,7 @@ def extract_search_terms(query):
                     areas.append(a)
 
     # 2. Check for multi-word area names (e.g. "raffles place", "ang mo kio")
-    for area in sorted(AREA_KEYWORDS, key=len, reverse=True):  # longest first
+    for area in sorted(AREA_KEYWORDS, key=len, reverse=True):
         if area in q_lower and area not in areas:
             areas.append(area)
 
@@ -200,10 +200,8 @@ def extract_search_terms(query):
     return keywords, areas
 
 
-
 def is_halal_query(query):
-    q = query.lower()
-    return "halal" in q
+    return "halal" in query.lower()
 
 
 def is_merchant_query(query):
@@ -258,7 +256,6 @@ def list_merchants_by_keyword(search_terms, area_found, data, keyword_index, hal
         return []
 
     if search_terms:
-        # Score each row by keyword match
         scores = {}
         for term in search_terms:
             for kw, indices in keyword_index.items():
@@ -270,9 +267,7 @@ def list_merchants_by_keyword(search_terms, area_found, data, keyword_index, hal
         seen_names = set()
         for idx, score in sorted(scores.items(), key=lambda x: -x[1]):
             row = data[idx]
-            if not is_deal_valid(row):
-                continue
-            if area_found and area_found not in row.get("address", "").lower():
+            if area_found and not any(area in row.get("address", "").lower() for area in area_found):
                 continue
             if halal_only and row.get("Halal", "").strip().lower() != "yes":
                 continue
@@ -283,13 +278,10 @@ def list_merchants_by_keyword(search_terms, area_found, data, keyword_index, hal
             if len(matched) >= limit:
                 break
     else:
-        # Area-only or halal-only search
         matched = []
         seen_names = set()
         for row in data:
-            if not is_deal_valid(row):
-                continue
-            if area_found and area_found not in row.get("address", "").lower():
+            if area_found and not any(area in row.get("address", "").lower() for area in area_found):
                 continue
             if halal_only and row.get("Halal", "").strip().lower() != "yes":
                 continue
@@ -304,11 +296,28 @@ def list_merchants_by_keyword(search_terms, area_found, data, keyword_index, hal
 
 
 # ── Formatters ────────────────────────────────────────────────────────────────
-def format_outlet_list(merchant_name, outlets):
+def format_outlet_list(merchant_name, outlets, area_filter=None):
     if not outlets:
-        return f"I'm sorry, I couldn't find any outlets for **{merchant_name}**. I do not know if they have other locations not listed in our system."
-    lines = [f"Here are the outlets for **{merchant_name}** ({len(outlets)} found):\n"]
-    for i, row in enumerate(outlets, 1):
+        return (
+            f"I'm sorry, I couldn't find any outlets for **{merchant_name}**. "
+            "I do not know if they have other locations not listed in our system."
+        )
+
+    display_outlets = outlets
+    area_note = ""
+
+    if area_filter:
+        filtered = [
+            row for row in outlets
+            if any(area in row.get("address", "").lower() for area in area_filter)
+        ]
+        if filtered:
+            display_outlets = filtered
+        else:
+            area_note = "_No outlets found in that area — showing all outlets instead._\n\n"
+
+    lines = [f"{area_note}Here are the outlets for **{merchant_name}** ({len(display_outlets)} found):\n"]
+    for i, row in enumerate(display_outlets, 1):
         address = row.get("address", "N/A")
         postal = row.get("postalC", "")
         postal_str = f" S({postal})" if postal else ""
@@ -320,18 +329,10 @@ def format_outlet_list(merchant_name, outlets):
     return "\n".join(lines)
 
 
-def format_keyword_list(search_terms, area_found, matched_rows, halal_only=False):
+def format_keyword_list(matched_rows, halal_only=False):
     if not matched_rows:
-        label_parts = []
-        if halal_only:
-            label_parts.append("halal")
-        if search_terms:
-            label_parts.append(", ".join(search_terms))
-        if area_found:
-            label_parts.append(f"near {area_found.title()}")
-        label = " ".join(label_parts) if label_parts else "your search"
         return (
-            f"I'm sorry, I do not know of any active merchants matching **{label}** in our programme.\n\n"
+            "I'm sorry, I do not know of any active merchants matching your search in our programme.\n\n"
             "Here are some things you can try:\n\n"
             "🔍 **Search by category:** 'food', 'spa', 'gym', 'retail', 'entertainment'\n"
             "📍 **Search by location:** 'Orchard', 'Tampines', 'Bugis', 'Jurong'\n"
@@ -341,16 +342,8 @@ def format_keyword_list(search_terms, area_found, matched_rows, halal_only=False
             "_Try narrowing down with a keyword or location!_"
         )
 
-    label_parts = []
-    if halal_only:
-        label_parts.append("Halal")
-    if search_terms:
-        label_parts.append(", ".join(search_terms))
-    if area_found:
-        label_parts.append(f"near {area_found.title()}")
-    label = " ".join(label_parts) if label_parts else "your search"
-
-    lines = [f"Here are merchants matching **{label}** (showing top {len(matched_rows)}, A–Z):\n"]
+    prefix = "Halal merchants" if halal_only else "Here are some merchants for you"
+    lines = [f"{prefix} (showing top {len(matched_rows)}, A–Z):\n"]
     for i, row in enumerate(matched_rows, 1):
         name = row.get("name", "N/A")
         address = row.get("address", "N/A")
@@ -380,24 +373,30 @@ def safe_llm_call(messages):
 def handle_user_query(query, data, unique_merchants, keyword_index):
     halal_only = is_halal_query(query)
 
-    # 1. List all merchants
+    # 1. List all merchants → show first 10 A–Z + region prompt
     if is_list_all_query(query) and not halal_only:
         total = len(unique_merchants)
-        return (
-            f"There are **{total} merchants** in our programme.\n\n"
-            "That's a lot to list! Try narrowing down:\n"
-            "🔍 'Show me food merchants' or 'spa deals'\n"
-            "📍 'Merchants near Orchard' or 'deals in Tampines'\n"
-            "🥩 'List me halal food' or 'halal merchants'\n"
-            "🏪 'Is [merchant name] our merchant?'"
+        first_10 = unique_merchants[:10]  # already sorted A–Z
+        lines = [
+            f"We have **{total} merchants** in our programme. Here are the first 10 (A–Z):\n"
+        ]
+        for i, name in enumerate(first_10, 1):
+            lines.append(f"**{i}. {name}**")
+        lines.append(
+            f"\n_Showing 10 of {total}. Want to see more? Try:_\n"
+            "- 🗺️ A region: *'merchants in the East'*, *'Central merchants'*, *'North merchants'*\n"
+            "- 📍 A specific area: *'merchants near Whampoa'*, *'deals in Tampines'*\n"
+            "- 🔍 A category: *'food merchants'*, *'spa deals'*"
         )
+        return "\n".join(lines)
 
     # 2. Outlet query — find merchant name first
     if is_outlet_query(query):
         merchant_name = find_merchant_by_name(query, unique_merchants)
         if merchant_name:
             outlets = find_all_outlets(merchant_name, data)
-            return format_outlet_list(merchant_name, outlets)
+            _, area_filter = extract_search_terms(query)
+            return format_outlet_list(merchant_name, outlets, area_filter=area_filter if area_filter else None)
         return (
             "I'm sorry, I do not know which merchant's outlets you're looking for. Try:\n"
             "'Old Chang Kee outlets' or 'Where are the Starbucks branches?'"
@@ -407,7 +406,29 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
     if is_merchant_query(query):
         merchant_name = find_merchant_by_name(query, unique_merchants)
         if merchant_name:
-            return f"Yes! **{merchant_name}** is one of our merchants. Ask me about their deals or outlets!"
+            rows = [row for row in data if row.get("name", "").strip() == merchant_name]
+            desc_text = ""
+            if rows:
+                desc = rows[0].get("description", "").strip()
+                if desc:
+                    desc_text = f"\n\n🎁 {desc}"
+            if len(rows) == 1:
+                addr = rows[0].get("address", "").strip()
+                postal = rows[0].get("postalC", "").strip()
+                postal_str = f" S({postal})" if postal else ""
+                return (
+                    f"Yes! **{merchant_name}** is one of our merchants.\n\n"
+                    f"📍 {addr}{postal_str}{desc_text}\n\n"
+                    f"Ask me about their deals or outlets!"
+                )
+            else:
+                return (
+                    f"Yes! **{merchant_name}** is one of our merchants and has **{len(rows)} outlets**.{desc_text}\n\n"
+                    f"Which area are you looking at? For example:\n"
+                    f"- 🗺️ A region: *Central, North, South, East, West, North East*\n"
+                    f"- 📍 A specific area: *Raffles Place, Tampines, Orchard, Jurong...*\n\n"
+                    f"Or ask: *'{merchant_name} outlets'* to see all locations."
+                )
         return (
             "I'm sorry, I do not know of that merchant in our programme. "
             "They may not be listed, or try checking the spelling.\n\n"
@@ -418,22 +439,28 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
     if halal_only:
         search_terms, area_found = extract_search_terms(query)
         matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index, halal_only=True)
-        return format_keyword_list(search_terms, area_found, matched, halal_only=True)
+        return format_keyword_list(matched, halal_only=True)
 
     # 5. Keyword / area search
     search_terms, area_found = extract_search_terms(query)
     if search_terms or area_found:
         matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index)
-        return format_keyword_list(search_terms, area_found, matched)
+        return format_keyword_list(matched)
 
     # 6. Fallback
     return FALLBACK_PROMPTS
 
 
 # ── Streamlit UI ──────────────────────────────────────────────────────────────
-   
 st.title("💬 Merchant Chatbot")
 st.caption("Ask me about our merchant partners, deals, and outlet locations!")
+
+st.markdown("""
+<style>
+[data-testid="stChatMessage"] { max-width: 100% !important; }
+[data-testid="stMarkdownContainer"] p { white-space: pre-wrap; word-break: break-word; }
+</style>
+""", unsafe_allow_html=True)
 
 # Load data
 data, unique_merchants, keyword_index, valid_names, valid_keywords = load_and_process_database()
@@ -467,13 +494,22 @@ if prompt := st.chat_input("Ask me about merchants, deals, or locations..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Looking that up..."):
-            # Build context from last 5 messages (excluding the current one)
+            # Build enriched query from last 5 user messages (deduplicated)
             recent = st.session_state.messages[:-1][-5:]
             context_text = " ".join(
                 m["content"] for m in recent if m["role"] == "user"
             )
-            # Merge context + current prompt for richer query resolution
-            enriched_query = f"{context_text} {prompt}".strip() if context_text else prompt
+            raw_enriched = f"{context_text} {prompt}".strip() if context_text else prompt
+
+            # Deduplicate words in enriched query
+            seen_words = set()
+            deduped_words = []
+            for word in raw_enriched.split():
+                if word.lower() not in seen_words:
+                    seen_words.add(word.lower())
+                    deduped_words.append(word)
+            enriched_query = " ".join(deduped_words)
+
             response = handle_user_query(enriched_query, data, unique_merchants, keyword_index)
         st.markdown(response)
 
