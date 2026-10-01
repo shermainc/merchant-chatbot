@@ -52,10 +52,10 @@ AREA_KEYWORDS = {
 
 FALLBACK_PROMPTS = (
     "Sorry, I'm not sure what you're looking for! Here are some things you can try:\n\n"
-    "🔍 **Search by category:** 'Show me food deals', 'spa merchants', 'gym discounts'\n"
-    "📍 **Search by location:** 'Snacks near Orchard', 'restaurants in Tampines'\n"
-    "🏪 **Find a merchant:** 'Is 4Fingers our merchant?', 'Do you have Subway?'\n"
-    "📋 **See all outlets:** 'Old Chang Kee outlets', 'Where are the Starbucks branches?'\n\n"
+    "🔍 **Search by category:** 'Show me food deals', 'spa merchants'\n"
+    "📍 **Search by location:** 'Snacks near Orchard', 'Bubble tea in Tampines'\n"
+    "🏪 **Find a merchant:** 'Is 4Fingers our merchant?'\n"
+    "📋 **See all outlets:** 'Old Chang Kee outlets'\n\n"
     "_Try one of the above to get started!_"
 )
 
@@ -284,7 +284,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
     if is_list_all_query(query):
         total = len(unique_merchants)
         return (
-            f"There are **{total} merchants** in our programme.\n\n"
+            f"There are **{total} merchants** \n\n"
             "That's a lot to list! Try narrowing down:\n"
             "🔍 'Show me food merchants' or 'spa deals'\n"
             "📍 'Merchants near Orchard' or 'deals in Tampines'\n"
@@ -299,7 +299,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
             return format_outlet_list(merchant_name, outlets)
         return (
             "Which merchant's outlets are you looking for? Try:\n"
-            "'Old Chang Kee outlets' or 'Where are the Starbucks branches?'"
+            "'Old Chang Kee outlets' "
         )
 
     # 3. Is X our merchant?
