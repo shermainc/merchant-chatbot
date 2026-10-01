@@ -4,6 +4,11 @@ import re
 import os
 from datetime import datetime
 from helper_functions.llm import get_completion_by_messages
+from helper_functions.utility import check_password  
+
+# Enforce secure access control
+if not check_password():  
+    st.stop()
 
 # ── Constants ────────────────────────────────────────────────────────────────
 CSV_FILE_PATH = "pages/merchants.csv"
