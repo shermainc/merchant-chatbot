@@ -397,7 +397,15 @@ if prompt := st.chat_input("Ask me about merchants, deals, or locations..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Looking that up..."):
-            response = handle_user_query(prompt, data, unique_merchants, keyword_index)
+            # Build context from last 5 messages (excluding the current one)
+            recent = st.session_state.messages[:-1][-5:]
+            context_text = " ".join(
+                m["content"] for m in recent if m["role"] == "user"
+            )
+            # Merge context + current prompt for richer query resolution
+            enriched_query = f"{context_text} {prompt}".strip() if context_text else prompt
+            response = handle_user_query(enriched_query, data, unique_merchants, keyword_index)
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
+})
