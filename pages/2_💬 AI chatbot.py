@@ -200,6 +200,29 @@ def get_region_for_address(address):
     return "other"
 
 
+# ── Format description text into readable bullet points ──────────────────────
+def format_description(desc):
+    """
+    Formats a description string for clean display.
+    If the description contains newlines (multi-line privilege text),
+    renders the first line as a bold header and subsequent lines as bullet points.
+    """
+    if not desc:
+        return ""
+
+    lines = [l.strip() for l in desc.splitlines() if l.strip()]
+
+    if len(lines) <= 1:
+        return desc  # Single-line: return as-is
+
+    # First line = bold header (e.g. "PASSION MEMBERSHIP PRIVILEGES:")
+    result = [f"**{lines[0]}**"]
+    for line in lines[1:]:
+        result.append(f"  - {line}")
+
+    return "\n".join(result)
+
+
 # ── Search helpers ────────────────────────────────────────────────────────────
 def extract_search_terms(query):
     q_lower = query.lower()
@@ -223,7 +246,7 @@ def extract_search_terms(query):
     for phrase in sorted(MULTI_WORD_PHRASES, key=len, reverse=True):
         if phrase in remaining:
             matched_phrases.append(phrase)
-            remaining = remaining.replace(phrase, " ")  # remove matched phrase from remaining
+            remaining = remaining.replace(phrase, " ")
 
     # ── Single-word keyword extraction from what's left ───────────────────────
     area_words = set(w for a in areas for w in a.split())
@@ -359,6 +382,10 @@ def format_outlet_list(merchant_name, outlets, area_filter=None):
         else:
             area_note = "_No outlets found in that area — showing all outlets instead._\n\n"
 
+    # ── Check if all outlets share the same description ───────────────────────
+    descriptions = [row.get("description", "").strip() for row in display_outlets]
+    all_same_desc = len(set(descriptions)) == 1 and descriptions[0]
+
     # ── Group outlets by region ───────────────────────────────────────────────
     region_order = ["central", "north", "north east", "east", "west", "south", "other"]
     grouped = {r: [] for r in region_order}
@@ -369,6 +396,12 @@ def format_outlet_list(merchant_name, outlets, area_filter=None):
 
     lines = [f"{area_note}Here are the outlets for **{merchant_name}** ({len(display_outlets)} found):\n"]
 
+    # ── Show shared description ONCE at the top ───────────────────────────────
+    if all_same_desc:
+        lines.append(f"🎁 {format_description(descriptions[0])}\n")
+        lines.append("---\n")
+
+    # ── List outlets by region (address only if desc already shown) ───────────
     for region in region_order:
         rows_in_region = grouped[region]
         if not rows_in_region:
@@ -379,10 +412,12 @@ def format_outlet_list(merchant_name, outlets, area_filter=None):
             address = row.get("address", "N/A")
             postal = row.get("postalC", "")
             postal_str = f" S({postal})" if postal else ""
-            desc = row.get("description", "")
             lines.append(f"• {address}{postal_str}")
-            if desc:
-                lines.append(f"  🎁 {desc}")
+            # Only show individual desc if outlets have different descriptions
+            if not all_same_desc:
+                desc = row.get("description", "").strip()
+                if desc:
+                    lines.append(f"  🎁 {format_description(desc)}")
         lines.append("")
 
     return "\n".join(lines)
@@ -413,7 +448,7 @@ def format_keyword_list(matched_rows, data, halal_only=False):
         address = row.get("address", "N/A")
         postal = row.get("postalC", "")
         postal_str = f" S({postal})" if postal else ""
-        desc = row.get("description", "")
+        desc = row.get("description", "").strip()
 
         # Count total outlets for this merchant
         total_outlets = count_all_outlets(name, data)
@@ -421,7 +456,7 @@ def format_keyword_list(matched_rows, data, halal_only=False):
         lines.append(f"**{i}. {name}**")
         lines.append(f"   📍 {address}{postal_str}")
         if desc:
-            lines.append(f"   🎁 {desc}")
+            lines.append(f"   🎁 {format_description(desc)}")
 
         # Disclaimer if merchant has more than 1 outlet
         if total_outlets > 1:
@@ -462,7 +497,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index, last_context
         total = len(unique_merchants)
         first_10 = unique_merchants[:10]
         lines = [
-            f"Here are the first 10 merchants listed in alphabetical order (A–Z):\n"
+            f"We have **{total} merchants** in our programme. Here are the first 10 (A–Z):\n"
         ]
         for i, name in enumerate(first_10, 1):
             lines.append(f"**{i}. {name}**")
@@ -495,7 +530,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index, last_context
             if rows:
                 desc = rows[0].get("description", "").strip()
                 if desc:
-                    desc_text = f"\n\n🎁 {desc}"
+                    desc_text = f"\n\n🎁 {format_description(desc)}"
             if len(rows) == 1:
                 addr = rows[0].get("address", "").strip()
                 postal = rows[0].get("postalC", "").strip()
@@ -581,7 +616,7 @@ if "messages" not in st.session_state:
         "role": "assistant",
         "content": (
             f"Hi there! 👋 I can help you find merchants and deals.\n\n"
-            f"Try asking:\n"
+            f"We have **{len(unique_merchants)} merchants** in our programme. Try asking:\n"
             "🔍 'Show me food deals' or 'spa merchants'\n"
             "📍 'Restaurants near Orchard' or 'deals in Tampines'\n"
             "🥩 'List me halal food' or 'halal merchants'\n"
