@@ -31,6 +31,19 @@ STOPWORDS = {
     "halal", "food",
 }
 
+# ── Multi-word keyword phrases (matched before word-splitting) ────────────────
+MULTI_WORD_PHRASES = [
+    "bubble tea", "boba tea", "milk tea", "ice cream", "escape room",
+    "hot pot", "hot dog", "fried chicken", "roast duck", "dim sum",
+    "char kway teow", "nasi lemak", "chicken rice", "fish and chips",
+    "beauty salon", "nail art", "hair salon", "hair cut", "hair color",
+    "personal trainer", "gym membership", "yoga class", "spin class",
+    "board game", "video game", "laser tag", "go kart", "mini golf",
+    "fast food", "fine dining", "buffet restaurant", "food court",
+    "coffee shop", "cake shop", "bread bakery", "pastry shop",
+    "sports wear", "sports equipment", "outdoor gear",
+]
+
 # ── Singapore area keywords ───────────────────────────────────────────────────
 AREA_KEYWORDS = {
     "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
@@ -103,6 +116,16 @@ SG_REGIONS = {
     ],
 }
 
+# ── Region label for display ──────────────────────────────────────────────────
+REGION_DISPLAY = {
+    "central": "🏙️ Central",
+    "north": "🧭 North",
+    "north east": "🧭 North East",
+    "east": "🌅 East",
+    "west": "🌇 West",
+    "south": "⚓ South",
+}
+
 FALLBACK_PROMPTS = (
     "I'm sorry, I'm not sure what you're looking for! Here are some things you can try:\n\n"
     "🔍 **Search by category:** 'Show me food deals', 'spa merchants', 'gym discounts'\n"
@@ -166,31 +189,53 @@ def is_deal_valid(row):
     return True
 
 
+# ── Assign a region label to an address string ───────────────────────────────
+def get_region_for_address(address):
+    addr_lower = address.lower()
+    for region, areas in SG_REGIONS.items():
+        if region in ("northeast",):  # skip duplicate alias
+            continue
+        if any(area in addr_lower for area in areas):
+            return region
+    return "other"
+
+
 # ── Search helpers ────────────────────────────────────────────────────────────
 def extract_search_terms(query):
     q_lower = query.lower()
     areas = []
 
+    # Detect region names → expand to area lists
     for region, sub_areas in SG_REGIONS.items():
         if region in q_lower:
             for a in sub_areas:
                 if a not in areas:
                     areas.append(a)
 
+    # Detect specific area keywords
     for area in sorted(AREA_KEYWORDS, key=len, reverse=True):
         if area in q_lower and area not in areas:
             areas.append(area)
 
-    words = re.findall(r"\b\w+\b", q_lower)
+    # ── Multi-word phrase detection (before splitting) ────────────────────────
+    remaining = q_lower
+    matched_phrases = []
+    for phrase in sorted(MULTI_WORD_PHRASES, key=len, reverse=True):
+        if phrase in remaining:
+            matched_phrases.append(phrase)
+            remaining = remaining.replace(phrase, " ")  # remove matched phrase from remaining
+
+    # ── Single-word keyword extraction from what's left ───────────────────────
     area_words = set(w for a in areas for w in a.split())
-    keywords = [
-        w for w in words
+    single_words = [
+        w for w in re.findall(r"\b\w+\b", remaining)
         if w not in STOPWORDS
         and w not in area_words
         and w not in SG_REGIONS
         and len(w) > 2
     ]
 
+    keywords = matched_phrases + single_words
     return keywords, areas
 
 
@@ -288,6 +333,11 @@ def list_merchants_by_keyword(search_terms, area_found, data, keyword_index, hal
     return sorted(matched, key=lambda r: r.get("name", ""))
 
 
+# ── Count total outlets for a merchant ───────────────────────────────────────
+def count_all_outlets(merchant_name, data):
+    return sum(1 for row in data if row.get("name", "").strip() == merchant_name)
+
+
 # ── Formatters ────────────────────────────────────────────────────────────────
 def format_outlet_list(merchant_name, outlets, area_filter=None):
     if not outlets:
@@ -309,20 +359,40 @@ def format_outlet_list(merchant_name, outlets, area_filter=None):
         else:
             area_note = "_No outlets found in that area — showing all outlets instead._\n\n"
 
+    # ── Group outlets by region ───────────────────────────────────────────────
+    region_order = ["central", "north", "north east", "east", "west", "south", "other"]
+    grouped = {r: [] for r in region_order}
+
+    for row in display_outlets:
+        region = get_region_for_address(row.get("address", ""))
+        grouped[region].append(row)
+
     lines = [f"{area_note}Here are the outlets for **{merchant_name}** ({len(display_outlets)} found):\n"]
-    for i, row in enumerate(display_outlets, 1):
-        address = row.get("address", "N/A")
-        postal = row.get("postalC", "")
-        postal_str = f" S({postal})" if postal else ""
-        desc = row.get("description", "")
-        lines.append(f"**{i}. {address}{postal_str}**")
-        if desc:
-            lines.append(f"   🎁 {desc}")
+
+    for region in region_order:
+        rows_in_region = grouped[region]
+        if not rows_in_region:
+            continue
+        label = REGION_DISPLAY.get(region, "📍 Other")
+        lines.append(f"**{label}**")
+        for row in rows_in_region:
+            address = row.get("address", "N/A")
+            postal = row.get("postalC", "")
+            postal_str = f" S({postal})" if postal else ""
+            desc = row.get("description", "")
+            lines.append(f"• {address}{postal_str}")
+            if desc:
+                lines.append(f"  🎁 {desc}")
         lines.append("")
+
     return "\n".join(lines)
 
 
-def format_keyword_list(matched_rows, halal_only=False):
+def format_keyword_list(matched_rows, data, halal_only=False):
+    """
+    Lists one address per merchant (the first in the CSV).
+    Adds a disclaimer if the merchant has more outlets.
+    """
     if not matched_rows:
         return (
             "I'm sorry, I do not know of any active merchants matching your search in our programme.\n\n"
@@ -337,17 +407,34 @@ def format_keyword_list(matched_rows, halal_only=False):
 
     prefix = "Halal merchants" if halal_only else "Here are some merchants for you"
     lines = [f"{prefix} (showing top {len(matched_rows)}, A–Z):\n"]
+
     for i, row in enumerate(matched_rows, 1):
         name = row.get("name", "N/A")
         address = row.get("address", "N/A")
+        postal = row.get("postalC", "")
+        postal_str = f" S({postal})" if postal else ""
         desc = row.get("description", "")
+
+        # Count total outlets for this merchant
+        total_outlets = count_all_outlets(name, data)
+
         lines.append(f"**{i}. {name}**")
-        lines.append(f"   📍 {address}")
+        lines.append(f"   📍 {address}{postal_str}")
         if desc:
             lines.append(f"   🎁 {desc}")
+
+        # Disclaimer if merchant has more than 1 outlet
+        if total_outlets > 1:
+            lines.append(
+                f"   ℹ️ _This merchant has **{total_outlets} outlets** in total. "
+                f"Ask me which area you're looking at, or try '{name} outlets' to see all locations._"
+            )
+
         lines.append("")
+
     if len(matched_rows) == 10:
         lines.append("_Showing first 10 results. Try a more specific search to narrow down!_")
+
     return "\n".join(lines)
 
 
@@ -363,8 +450,12 @@ def safe_llm_call(prompt_text):
 
 
 # ── Main query handler ────────────────────────────────────────────────────────
-def handle_user_query(query, data, unique_merchants, keyword_index):
+def handle_user_query(query, data, unique_merchants, keyword_index, last_context=None):
     halal_only = is_halal_query(query)
+
+    # Reset context on clearly new/unrelated query types
+    if is_list_all_query(query) or is_outlet_query(query) or is_merchant_query(query):
+        st.session_state.last_search_context = {"keywords": [], "areas": []}
 
     # 1. List all merchants → show first 10 A–Z + region prompt
     if is_list_all_query(query) and not halal_only:
@@ -431,20 +522,29 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
     # 4. Halal-only query
     if halal_only:
         search_terms, area_found = extract_search_terms(query)
+        if not search_terms and not area_found and last_context:
+            search_terms = last_context.get("keywords", [])
+            area_found = last_context.get("areas", [])
         matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index, halal_only=True)
-        return format_keyword_list(matched, halal_only=True)
+        st.session_state.last_search_context = {"keywords": search_terms, "areas": area_found}
+        return format_keyword_list(matched, data, halal_only=True)
 
     # 5. Keyword / area search
     search_terms, area_found = extract_search_terms(query)
+
+    if not search_terms and not area_found and last_context:
+        search_terms = last_context.get("keywords", [])
+        area_found = last_context.get("areas", [])
+
     if search_terms or area_found:
         matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index)
-        return format_keyword_list(matched)
+        st.session_state.last_search_context = {"keywords": search_terms, "areas": area_found}
+        return format_keyword_list(matched, data)
 
-    # 6. Fallback → LLM for complex/ambiguous queries
+    # 6. Fallback → LLM
     merchant_summary = "\n".join(
         f"- {r['name']}: {r.get('description', '')}" for r in data[:30]
     )
-    # Guard token count before sending to LLM
     if count_tokens(merchant_summary) > 3000:
         merchant_summary = "\n".join(
             f"- {r['name']}: {r.get('description', '')}" for r in data[:15]
@@ -490,6 +590,10 @@ if "messages" not in st.session_state:
         )
     })
 
+# Initialise search context memory
+if "last_search_context" not in st.session_state:
+    st.session_state.last_search_context = {"keywords": [], "areas": []}
+
 # Display chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
@@ -503,7 +607,10 @@ if prompt := st.chat_input("Ask me about merchants, deals, or locations..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Looking that up..."):
-            response = handle_user_query(prompt, data, unique_merchants, keyword_index)
+            response = handle_user_query(
+                prompt, data, unique_merchants, keyword_index,
+                last_context=st.session_state.last_search_context
+            )
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
