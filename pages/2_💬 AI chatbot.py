@@ -24,8 +24,8 @@ WELCOME_MESSAGE = """👋 Hi! I'm your merchant deals assistant. Here are some t
 
 - 🔍 **Search by category:** `bubble tea`, `Japanese food`, `desserts`
 - 📍 **Search by area:** `Orchard`, `Tampines`, `central`, `north`
-- 🏪 **Find a merchant:** `Is Subway our merchant?`
-- 📋 **List outlets:** `Old Chang Kee outlets`, `Subway outlets in Orchard`
+- 🏪 **Find a merchant:** `Is Playmade our merchant?`
+- 📋 **List outlets:** `Old Chang Kee outlets`, `Playmade outlets in Orchard`
 - 🥗 **Halal options:** `halal food`, `halal desserts in east`
 - 📜 **List all merchants:** `list all merchants`
 
@@ -74,7 +74,7 @@ AREA_KEYWORDS = {
     "pioneer", "joo koon", "gul circle", "tuas", "bukit batok",
     "bukit gombak", "tengah", "hong kah", "bukit panjang", "fajar",
     "senja", "jelapang", "bangkit", "pending", "petir", "segar",
-    "saujana", "senja", "bukit panjang",
+    "saujana", "bukit panjang",
     "kampong bahru", "killiney", "holland drive", "bukit merah",
 }
 
@@ -141,7 +141,7 @@ POSTAL_DISTRICT_REGION = {
     **{d: "west"    for d in [22,23,24,25,26,27]},
     **{d: "north"   for d in [28,29,30,31,32,33,34,35,36,37,38,39,40,41,72,73,74,75,76,77,78,79,80,81,82,83,84]},
     **{d: "east"    for d in [42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71]},
-    **{d: "south"   for d in [9]},  # Sentosa / HarbourFront area
+    **{d: "south"   for d in [9]},
 }
 
 # ── Data loading ───────────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ def is_deal_valid(start_str, end_str):
             except ValueError:
                 continue
         else:
-            return True  # unparseable → include
+            return True
         return end_dt >= today
     except Exception:
         return True
@@ -399,7 +399,8 @@ def format_keyword_list(results, df):
         postal_str = f" S({postal})" if postal else ""
         raw_desc = r.get("description", "").strip()
 
-        lines.append(f"---\n#### 🏪 {name}")
+        # FIX 1: Downsized heading from #### to ##### for less visual weight
+        lines.append(f"---\n##### 🏪 {name}")
         lines.append(f"📍 {address}{postal_str}")
 
         if raw_desc:
@@ -414,9 +415,10 @@ def format_keyword_list(results, df):
         outlet_count = count_all_outlets(df, name)
         if outlet_count > 1:
             lines.append("")
+            # FIX 3: Italicised disclaimer so it's visually de-emphasised
             lines.append(
-                f"ℹ️ This merchant has {outlet_count} outlets in total. "
-                f"Ask me which area you're looking at, or try '**{name} outlets**' to see all locations."
+                f"_ℹ️ This merchant has {outlet_count} outlets in total. "
+                f"Ask me which area you're looking at, or try '**{name} outlets**' to see all locations._"
             )
 
     if count >= MAX_RESULTS:
@@ -478,8 +480,8 @@ def format_outlet_list(outlets, merchant_name, area_filter=""):
             postal_str = f" S({postal})" if postal else ""
             desc = row.get("description", "").strip()
 
-            lines.append("")                                        # blank line before each outlet
-            lines.append(f"• **{address}{postal_str}**")           # bold address
+            lines.append("")
+            lines.append(f"• **{address}{postal_str}**")
 
             if desc and not shared_desc:
                 parsed = format_description_lines(desc)
