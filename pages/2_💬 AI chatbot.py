@@ -33,10 +33,10 @@ WELCOME_MESSAGE = """
 👋 Hi! I'm your Merchant AI Assistant. Here's what I can help you with:
 
 - 🔍 **Find merchants by category or keyword**
-  *e.g. "bubble tea", "Japanese food", "spa"*
+  *e.g. "bubble tea", "spa"*
 
 - 📍 **Find merchants by area or region**
-  *e.g. "food in Tampines", "west region merchants"*
+  *e.g. "food in Tampines"*
 
 - 🏪 **Check if a merchant is in our list**
   *e.g. "Is Playmade our merchant?"*
@@ -47,8 +47,8 @@ WELCOME_MESSAGE = """
 - 📜 **List all merchants**
   *e.g. "List all merchants"*
 
-- 🥩 **Filter by Halal**
-  *e.g. "halal food in Jurong"*
+- ☪️ **Filter by Halal**
+  *e.g. "list halal merchants"*
 
 What would you like to know?
 """
@@ -181,9 +181,6 @@ def is_deal_valid(row):
 df = load_data()
 
 # ── Keyword index — Keywords column ONLY ─────────────────────────────────────
-# FIX 1: Index built from Keywords column only (not description or name)
-# so that searches are strict — a merchant only appears if the term is
-# explicitly tagged in their Keywords field.
 @st.cache_data
 def build_keyword_index(df):
     index = {}
@@ -375,7 +372,6 @@ def format_outlet_list(merchant_name, outlets_df, area_filter=None):
     return "\n".join(lines).strip()
 
 def list_merchants_by_keyword(query_keywords, query_areas, df, halal_only=False):
-    # FIX 1: Separate single-word keywords from multi-word phrases
     single_keywords = [kw for kw in query_keywords if " " not in kw]
     phrase_keywords  = [kw for kw in query_keywords if " " in kw]
 
@@ -390,7 +386,7 @@ def list_merchants_by_keyword(query_keywords, query_areas, df, halal_only=False)
         for idx in matched_indices:
             scores[idx] = scores.get(idx, 0) + 1
 
-    # Multi-word phrases → direct substring search on Keywords column only
+    # Multi-word phrases → Keywords column only
     for phrase in phrase_keywords:
         for i, row in df.iterrows():
             kw_field = str(row.get("Keywords", "")).lower()
@@ -605,22 +601,26 @@ if prompt := st.chat_input("Ask about merchants, deals, or locations..."):
 
         st.markdown(response)
 
-        # FIX 2: Auto-scroll — setTimeout gives Streamlit time to finish
-        # rendering the new message before the scroll fires
+        # FIX: Auto-scroll — interval retries every 300 ms up to 5 times,
+        # ensuring the scroll fires after Streamlit finishes rendering
         components.html("""
         <script>
-        function scrollToBottom() {
-            const chatContainer = window.parent.document.querySelector(
-                '[data-testid="stChatMessageContainer"]'
-            );
-            if (chatContainer) {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-        }
-        // First attempt after short delay
-        setTimeout(scrollToBottom, 300);
-        // Second attempt in case rendering takes longer
-        setTimeout(scrollToBottom, 800);
+        (function() {
+            var attempts = 0;
+            var maxAttempts = 5;
+            var interval = setInterval(function() {
+                var el = window.parent.document.querySelector(
+                    '[data-testid="stChatMessageContainer"]'
+                );
+                if (el) {
+                    el.scrollTop = el.scrollHeight;
+                }
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    clearInterval(interval);
+                }
+            }, 300);
+        })();
         </script>
         """, height=0)
 
