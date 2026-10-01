@@ -33,7 +33,7 @@ WELCOME_MESSAGE = """
 👋 Hi! I'm your Merchant AI Assistant. Here's what I can help you with:
 
 - 🔍 **Find merchants by category or keyword**
-  *e.g. "bubble tea", "spa"*
+  *e.g. "bubble tea", "fast food","cake stores","spa"*
 
 - 📍 **Find merchants by area or region**
   *e.g. "food in Tampines"*
@@ -42,12 +42,9 @@ WELCOME_MESSAGE = """
   *e.g. "Is Playmade our merchant?"*
 
 - 📋 **See all outlets for a merchant**
-  *e.g. "Old Chang Kee outlets", "Playmade outlets in the east"*
+  *e.g. "Old Chang Kee outlets", "Skechers store" ,"Playmade stores in the east"*
 
-- 📜 **List all merchants**
-  *e.g. "List all merchants"*
-
-- ☪️ **Filter by Halal**
+- ☪️ **Filter by Halal merchants**
   *e.g. "list halal merchants"*
 
 What would you like to know?
