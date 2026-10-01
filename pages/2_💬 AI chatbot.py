@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import json
 import re
@@ -285,7 +286,8 @@ def format_description_lines(raw_desc):
 def detect_outlet_query(query):
     q_norm = normalise(query)
     merchant_names = df["name"].unique().tolist()
-    outlet_triggers = ["outlet", "outlets", "branch", "branches", "location", "locations", "where"]
+    # FIX 2: Added "store" and "stores" to outlet triggers
+    outlet_triggers = ["outlet", "outlets", "store", "stores", "branch", "branches", "location", "locations", "where"]
     if not any(t in q_norm for t in outlet_triggers):
         return None, None
     matched = fuzzy_match_merchant(query, merchant_names)
@@ -354,6 +356,7 @@ def format_outlet_list(merchant_name, outlets_df, area_filter=None):
         if not rows:
             continue
         lines.append(f"**{region_labels[region_key]}**")
+        lines.append("")   # FIX 1: blank line so address renders on its own line
         for row in rows:
             addr = str(row.get("address", "")).strip()
             postal = str(row.get("postalC", "")).strip()
@@ -431,7 +434,7 @@ def format_keyword_list(results, df):
             for is_hdr, text in parsed:
                 if is_hdr:
                     if not first_desc:
-                        lines.append("")   # ← FIX 1: blank line before each subsequent header
+                        lines.append("")
                     lines.append(f"🎁 {text}")
                 else:
                     lines.append(f"   {text}")
@@ -440,7 +443,7 @@ def format_keyword_list(results, df):
         outlet_count = count_all_outlets(name, df)
         if outlet_count > 1:
             lines.append("")
-            lines.append(                  # ← FIX 2: blockquote for smaller, consistent size
+            lines.append(
                 f"> ℹ️ *This merchant has {outlet_count} outlets in total. "
                 f"Ask me which area you're looking at, or try '**{name} outlets**' to see all locations.*"
             )
@@ -590,9 +593,19 @@ if prompt := st.chat_input("Ask about merchants, deals, or locations..."):
         keywords, areas = extract_search_terms(prompt)
         if keywords or areas:
             st.session_state.last_search_context = {"keywords": keywords, "areas": areas}
-        elif re.search(r"\blist\b|\boutlet|\bmerchant\b", prompt.lower()):
+        elif re.search(r"\blist\b|\boutlet|\bstore|\bmerchant\b", prompt.lower()):
             st.session_state.last_search_context = None
 
         st.markdown(response)
+
+        # FIX 3: Auto-scroll to bottom after each response
+        components.html("""
+        <script>
+        const chatContainer = window.parent.document.querySelector('[data-testid="stChatMessageContainer"]');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        </script>
+        """, height=0)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
