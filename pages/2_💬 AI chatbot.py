@@ -1,198 +1,176 @@
 import streamlit as st
 import pandas as pd
+import json
 import re
 from difflib import SequenceMatcher
-from helper_functions.llm import get_completion, get_completion_by_messages, count_tokens
 from helper_functions.utility import check_password
+from helper_functions.llm import get_completion, get_completion_by_messages, count_tokens
 
 if not check_password():
     st.stop()
 
-# ── Page config ───────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Merchant Chatbot", page_icon="🛍️")
-st.title("🛍️ Merchant Chatbot")
-st.caption("Ask me about our merchants, deals, and locations!")
+# ── Constants ──────────────────────────────────────────────────────────────────
 
-st.markdown("""
-<style>
-[data-testid="stChatMessage"] { max-width: 100% !important; }
-</style>
-""", unsafe_allow_html=True)
+CSV_PATH = "pages/merchants.csv"
+MAX_RESULTS = 10
+MAX_LLM_CONTEXT_TOKENS = 1500
 
-# ── Constants ─────────────────────────────────────────────────────────────────
 FALLBACK_PROMPTS = (
-    "I do not know the answer to that. You can try asking me:\n"
-    "- *What merchants are available?*\n"
-    "- *Show me food merchants in Orchard*\n"
-    "- *Is Old Chang Kee our merchant?*\n"
-    "- *List halal merchants near Tampines*"
+    "I do not know the answer to that. Try asking about a specific merchant, "
+    "category (e.g. 'bubble tea', 'Japanese food'), or area (e.g. 'Orchard', 'Tampines')."
 )
 
-WELCOME_MESSAGE = (
-    "👋 Hi! I'm your Merchant Chatbot. Here are some things you can ask me — feel free to copy and paste!\n\n"
-    "---\n"
-    "🔍 **Browse merchants**\n"
-    "> List all merchants\n\n"
-    "📍 **Search by area**\n"
-    "> Show me merchants in Tampines\n\n"
-    "> Show me merchants in the North\n\n"
-    "🍽️ **Search by category**\n"
-    "> Show me food merchants\n\n"
-    "> Any bubble tea merchants?\n\n"
-    "🕌 **Halal options**\n"
-    "> List halal merchants near Jurong\n\n"
-    "🏪 **Check a specific merchant**\n"
-    "> Is Old Chang Kee our merchant?\n\n"
-    "> Old Chang Kee outlets\n\n"
-    "---\n"
-    "_Type your question below or copy one of the prompts above!_"
-)
+WELCOME_MESSAGE = """👋 Hi! I'm your merchant deals assistant. Here are some things you can ask me:
+
+- 🔍 **Search by category:** `bubble tea`, `Japanese food`, `desserts`
+- 📍 **Search by area:** `Orchard`, `Tampines`, `central`, `north`
+- 🏪 **Find a merchant:** `Is Subway our merchant?`
+- 📋 **List outlets:** `Old Chang Kee outlets`, `Subway outlets in Orchard`
+- 🥗 **Halal options:** `halal food`, `halal desserts in east`
+- 📜 **List all merchants:** `list all merchants`
+
+What would you like to find today?"""
 
 MULTI_WORD_PHRASES = [
-    "bubble tea", "ice cream", "escape room", "hot pot", "hot dogs",
-    "fried chicken", "fish and chips", "dim sum", "char kway teow",
-    "bak kut teh", "nasi lemak", "laksa", "chicken rice",
+    "bubble tea", "ice cream", "escape room", "hot pot", "dim sum",
+    "fish and chips", "fried chicken", "roast duck", "char siew",
+    "bak kut teh", "laksa", "chicken rice", "nasi lemak", "roti prata",
+    "frozen yogurt", "soft serve", "milk tea", "fruit tea", "cheese tea",
+    "board game", "laser tag", "rock climbing", "indoor cycling",
+    "nail art", "hair salon", "beauty salon", "spa treatment",
+    "personal training", "gym membership",
 ]
 
 AREA_KEYWORDS = {
     # Central
-    "orchard", "somerset", "dhoby ghaut", "city hall", "raffles", "marina",
-    "tanjong pagar", "chinatown", "outram", "tiong bahru", "redhill",
-    "queenstown", "commonwealth", "buona vista", "holland", "farrer road",
-    "botanic gardens", "stevens", "newton", "novena", "toa payoh", "braddell",
-    "bishan", "marymount", "caldecott", "bras basah", "bugis", "rochor",
-    "little india", "lavender", "kallang", "aljunied", "geylang", "paya lebar",
-    "macpherson", "tai seng", "potong pasir", "woodleigh", "serangoon",
-    "whampoa", "bendemeer", "boon keng", "farrer park", "dhoby",
-    # North (includes former North East)
-    "yishun", "khatib", "yio chu kang", "ang mo kio", "amk", "sembawang",
-    "canberra", "admiralty", "woodlands", "marsiling", "kranji",
-    "punggol", "sengkang", "buangkok", "hougang", "kovan", "serangoon north",
-    "compassvale", "rivervale", "fernvale", "northshore",
-    # East
-    "tampines", "simei", "tanah merah", "bedok", "kembangan", "eunos",
-    "changi", "expo", "pasir ris", "loyang", "upper changi",
-    # West
-    "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
-    "dover", "one-north", "one north", "kent ridge", "haw par villa",
-    "bukit panjang", "choa chu kang", "yew tee", "bukit batok",
-    "bukit gombak", "hillview", "beauty world", "king albert park",
-    "sixth avenue", "tan kah kee",
-    # South
-    "harbourfront", "vivocity", "sentosa", "labrador park",
-    "pasir panjang", "west coast", "telok blangah",
+    "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
+    "marina bay", "tanjong pagar", "chinatown", "bugis", "bras basah",
+    "novena", "newton", "bishan", "toa payoh", "ang mo kio", "braddell",
+    "marymount", "caldecott", "botanic gardens", "farrer road", "holland",
+    "buona vista", "one north", "kent ridge", "haw par villa", "pasir panjang",
+    "clementi", "dover", "commonwealth", "queenstown", "redhill", "tiong bahru",
+    "outram", "harbourfront", "vivocity", "sentosa", "labrador park",
+    "telok blangah", "west coast", "alexandra", "river valley", "great world",
+    "dempsey", "tanglin", "stevens", "napier", "nassim", "scotts",
+    "mount elizabeth", "gleneagles", "forum", "wheelock", "ion",
+    "wisma", "lucky plaza", "plaza singapura", "cathay", "balmoral",
+    "adam", "sixth avenue", "bukit timah", "beauty world", "king albert park",
+    "upper bukit timah", "hillview", "cashew", "phoenix", "choa chu kang",
+    "yew tee", "kranji", "marsiling", "woodlands", "admiralty", "sembawang",
+    "canberra", "yishun", "khatib", "little india", "rochor", "jalan besar",
+    "bendemeer", "geylang bahru", "whampoa", "boon keng", "potong pasir",
+    "woodleigh", "serangoon", "lorong chuan", "bartley", "tai seng",
+    "macpherson", "ubi", "kaki bukit", "bedok north", "bedok reservoir",
+    "tampines west", "tampines", "tampines east", "upper changi", "expo",
+    "changi airport", "pasir ris", "simei", "tanah merah", "bedok",
+    "kembangan", "eunos", "paya lebar", "aljunied", "kallang", "lavender",
+    "nicoll highway", "promenade", "esplanade", "bayfront", "downtown",
+    "telok ayer", "maxwell", "shenton way", "tanjong pagar plaza",
+    "arab street", "kampong glam", "haji lane", "bussorah",
+    "upper paya lebar", "kovan", "hougang", "buangkok", "sengkang",
+    "punggol", "northshore", "fernvale", "thanggam", "cheng lim",
+    "ranggung", "kupang", "rivervale", "compassvale", "anchorvale",
+    "jurong east", "jurong west", "jurong lake", "lakeside", "boon lay",
+    "pioneer", "joo koon", "gul circle", "tuas", "bukit batok",
+    "bukit gombak", "tengah", "hong kah", "bukit panjang", "fajar",
+    "senja", "jelapang", "bangkit", "pending", "petir", "segar",
+    "saujana", "senja", "bukit panjang",
+    "kampong bahru", "killiney", "holland drive", "bukit merah",
 }
 
 SG_REGIONS = {
     "central": [
-        "orchard", "somerset", "dhoby ghaut", "city hall", "raffles", "marina",
-        "tanjong pagar", "chinatown", "outram", "tiong bahru", "redhill",
-        "queenstown", "commonwealth", "buona vista", "holland", "farrer road",
-        "botanic gardens", "stevens", "newton", "novena", "toa payoh", "braddell",
-        "bishan", "marymount", "caldecott", "bras basah", "bugis", "rochor",
-        "little india", "lavender", "kallang", "aljunied", "geylang", "paya lebar",
-        "macpherson", "tai seng", "potong pasir", "woodleigh", "serangoon",
-        "whampoa", "bendemeer", "boon keng", "farrer park", "dhoby",
+        "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
+        "marina bay", "tanjong pagar", "chinatown", "bugis", "bras basah",
+        "novena", "newton", "bishan", "toa payoh", "ang mo kio", "braddell",
+        "marymount", "caldecott", "botanic gardens", "farrer road", "holland",
+        "buona vista", "one north", "kent ridge", "haw par villa",
+        "clementi", "dover", "commonwealth", "queenstown", "redhill", "tiong bahru",
+        "outram", "alexandra", "river valley", "great world",
+        "dempsey", "tanglin", "stevens", "napier", "nassim", "scotts",
+        "mount elizabeth", "gleneagles", "forum", "wheelock", "ion",
+        "wisma", "lucky plaza", "plaza singapura", "cathay", "balmoral",
+        "adam", "sixth avenue", "bukit timah", "beauty world", "king albert park",
+        "upper bukit timah", "hillview", "cashew", "phoenix",
+        "little india", "rochor", "jalan besar", "bendemeer",
+        "geylang bahru", "whampoa", "boon keng", "potong pasir",
+        "woodleigh", "serangoon", "lorong chuan", "bartley", "tai seng",
+        "macpherson", "arab street", "kampong glam", "haji lane", "bussorah",
+        "telok ayer", "maxwell", "shenton way", "tanjong pagar plaza",
+        "nicoll highway", "promenade", "esplanade", "bayfront", "downtown",
+        "kampong bahru", "killiney", "holland drive", "bukit merah",
+        "upper paya lebar",
     ],
     "north": [
-        "yishun", "khatib", "yio chu kang", "ang mo kio", "amk", "sembawang",
-        "canberra", "admiralty", "woodlands", "marsiling", "kranji",
-        "punggol", "sengkang", "buangkok", "hougang", "kovan", "serangoon north",
-        "compassvale", "rivervale", "fernvale", "northshore",
+        "choa chu kang", "yew tee", "kranji", "marsiling", "woodlands",
+        "admiralty", "sembawang", "canberra", "yishun", "khatib",
+        "kovan", "hougang", "buangkok", "sengkang", "punggol",
+        "northshore", "fernvale", "thanggam", "cheng lim",
+        "ranggung", "kupang", "rivervale", "compassvale", "anchorvale",
     ],
     "east": [
-        "tampines", "simei", "tanah merah", "bedok", "kembangan", "eunos",
-        "changi", "expo", "pasir ris", "loyang", "upper changi",
-    ],
-    "west": [
-        "jurong", "boon lay", "lakeside", "chinese garden", "clementi",
-        "dover", "one-north", "one north", "kent ridge", "haw par villa",
-        "bukit panjang", "choa chu kang", "yew tee", "bukit batok",
-        "bukit gombak", "hillview", "beauty world", "king albert park",
-        "sixth avenue", "tan kah kee",
+        "tampines", "tampines west", "tampines east", "upper changi", "expo",
+        "changi airport", "pasir ris", "simei", "tanah merah", "bedok",
+        "kembangan", "eunos", "paya lebar", "aljunied", "kallang", "lavender",
+        "bedok north", "bedok reservoir", "kaki bukit", "ubi",
+        "macpherson", "geylang",
     ],
     "south": [
         "harbourfront", "vivocity", "sentosa", "labrador park",
         "pasir panjang", "west coast", "telok blangah",
     ],
-}
-
-POSTAL_DISTRICT_REGION = {
-    "01": "central", "02": "central", "03": "central", "04": "central",
-    "05": "central", "06": "central", "07": "central", "08": "central",
-    "09": "central", "10": "central", "11": "central", "12": "central",
-    "13": "central", "14": "central", "15": "central", "16": "central",
-    "17": "central", "18": "central", "19": "central", "20": "central",
-    "21": "central", "22": "central", "23": "central",
-    "24": "south", "25": "south", "26": "south", "27": "south",
-    "28": "south", "29": "south", "30": "south",
-    "31": "south", "32": "south", "33": "south",
-    "34": "east", "35": "east", "36": "east", "37": "east",
-    "38": "east", "39": "east", "40": "east", "41": "east",
-    "42": "east", "43": "east", "44": "east", "45": "east",
-    "46": "east", "47": "east", "48": "east",
-    "49": "east", "50": "east", "51": "east", "52": "east",
-    "53": "north", "54": "north", "55": "north",
-    "56": "north", "57": "north",
-    "60": "west", "61": "west", "62": "west", "63": "west", "64": "west",
-    "65": "west", "66": "west", "67": "west", "68": "west", "69": "west",
-    "70": "west", "71": "west",
-    "72": "north", "73": "north", "74": "north", "75": "north", "76": "north",
-    "77": "north", "78": "north",
-    "79": "north", "80": "north",
-    "81": "north", "82": "north", "83": "north", "84": "north",
+    "west": [
+        "jurong east", "jurong west", "jurong lake", "lakeside", "boon lay",
+        "pioneer", "joo koon", "gul circle", "tuas", "bukit batok",
+        "bukit gombak", "tengah", "hong kah", "bukit panjang", "fajar",
+        "senja", "jelapang", "bangkit", "pending", "petir", "segar",
+        "saujana", "bukit panjang",
+    ],
 }
 
 REGION_EMOJI = {
     "central": "🏙️ Central",
-    "north":   "🧭 North",
-    "east":    "🌅 East",
-    "west":    "🌇 West",
-    "south":   "⚓ South",
-    "other":   "📍 Other",
+    "east": "🌅 East",
+    "west": "🌇 West",
+    "south": "⚓ South",
+    "north": "🧭 North",
 }
 
-STOPWORDS = {
-    "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "do", "does", "did", "will", "would", "could",
-    "should", "may", "might", "shall", "can", "need", "dare", "ought",
-    "used", "to", "of", "in", "on", "at", "by", "for", "with", "about",
-    "against", "between", "into", "through", "during", "before", "after",
-    "above", "below", "from", "up", "down", "out", "off", "over", "under",
-    "again", "further", "then", "once", "and", "but", "or", "nor", "so",
-    "yet", "both", "either", "neither", "not", "only", "own", "same",
-    "than", "too", "very", "just", "because", "as", "until", "while",
-    "i", "me", "my", "we", "our", "you", "your", "he", "she", "it",
-    "they", "them", "their", "what", "which", "who", "this", "that",
-    "these", "those", "am", "any", "show", "find", "get", "give", "tell",
-    "list", "near", "around", "want", "looking", "look", "like", "know",
-    "there", "here", "where", "when", "how", "all", "some", "no", "if",
-    "merchant", "merchants", "deal", "deals", "outlet", "outlets",
-    "store", "stores", "shop", "shops", "available", "singapore",
+POSTAL_DISTRICT_REGION = {
+    **{d: "central" for d in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]},
+    **{d: "west"    for d in [22,23,24,25,26,27]},
+    **{d: "north"   for d in [28,29,30,31,32,33,34,35,36,37,38,39,40,41,72,73,74,75,76,77,78,79,80,81,82,83,84]},
+    **{d: "east"    for d in [42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71]},
+    **{d: "south"   for d in [9]},  # Sentosa / HarbourFront area
 }
 
-# ── CSV loading ───────────────────────────────────────────────────────────────
+# ── Data loading ───────────────────────────────────────────────────────────────
+
 from datetime import datetime
 
-def is_deal_valid(row):
+def is_deal_valid(start_str, end_str):
+    formats = ["%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d"]
     today = datetime.today()
-    end_val = str(row.get("endDate", "")).strip()
-    if not end_val:
+    try:
+        for fmt in formats:
+            try:
+                end_dt = datetime.strptime(str(end_str).strip(), fmt)
+                break
+            except ValueError:
+                continue
+        else:
+            return True  # unparseable → include
+        return end_dt >= today
+    except Exception:
         return True
-    for fmt in ["%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%d"]:
-        try:
-            end_date = datetime.strptime(end_val, fmt)
-            return end_date >= today
-        except ValueError:
-            continue
-    return True
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("pages/merchants.csv", dtype=str)
+    df = pd.read_csv(CSV_PATH)
     df.columns = df.columns.str.strip()
     df = df.fillna("")
-    df = df[df.apply(is_deal_valid, axis=1)].reset_index(drop=True)
+    df = df[df.apply(lambda r: is_deal_valid(r.get("startDate",""), r.get("endDate","")), axis=1)]
+    df = df.reset_index(drop=True)
     return df
 
 @st.cache_data
@@ -202,305 +180,293 @@ def build_keyword_index(_df):
         kw_field = str(row.get("Keywords", "")).lower()
         desc_field = str(row.get("description", "")).lower()
         addr_field = str(row.get("address", "")).lower()
-        tokens = set()
-        for field in [kw_field, desc_field, addr_field]:
-            for phrase in MULTI_WORD_PHRASES:
-                if phrase in field:
-                    tokens.add(phrase)
-            for word in re.split(r"[,\s]+", field):
-                word = word.strip().lower()
-                if word and word not in STOPWORDS:
-                    tokens.add(word)
-        for token in tokens:
-            index.setdefault(token, []).append(i)
+        tokens = set(re.split(r"[,\s]+", kw_field + " " + desc_field + " " + addr_field))
+        for tok in tokens:
+            tok = tok.strip()
+            if tok:
+                index.setdefault(tok, []).append(i)
     return index
 
-df = load_data()
-keyword_index = build_keyword_index(df)
-unique_merchants = sorted(df["name"].dropna().unique().tolist())
+@st.cache_data
+def get_unique_merchants(_df):
+    seen = set()
+    result = []
+    for _, row in _df.sort_values("name").iterrows():
+        name = row["name"].strip()
+        if name and name not in seen:
+            seen.add(name)
+            result.append(name)
+    return result
 
-# ── Helper functions ──────────────────────────────────────────────────────────
+# ── Text helpers ───────────────────────────────────────────────────────────────
+
+STOPWORDS = {
+    "a","an","the","is","are","was","were","be","been","being",
+    "have","has","had","do","does","did","will","would","could","should",
+    "may","might","shall","can","need","dare","ought","used",
+    "i","me","my","we","our","you","your","he","she","it","they","them","their",
+    "this","that","these","those","what","which","who","whom","whose",
+    "where","when","why","how","all","any","both","each","few","more",
+    "most","other","some","such","no","nor","not","only","own","same",
+    "so","than","too","very","just","but","and","or","if","in","on",
+    "at","to","for","of","with","by","from","up","about","into","through",
+    "during","before","after","above","below","between","out","off","over",
+    "under","again","further","then","once","here","there","s","t",
+    "find","show","tell","give","list","get","look","search","want",
+    "need","know","like","near","around","area","place","places",
+    "merchant","merchants","deal","deals","offer","offers","promo","promos",
+    "promotion","promotions","discount","discounts","voucher","vouchers",
+    "available","singapore","sg",
+}
 
 def normalise(text: str) -> str:
-    """Lowercase, replace & with 'and', strip punctuation, collapse whitespace."""
-    text = text.lower()
-    text = text.replace("&", "and")
-    text = re.sub(r"[^\w\s]", "", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    text = text.lower().replace("&", "and")
+    text = re.sub(r"[^\w\s]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
 
-def fuzzy_match_merchant(query_norm: str, threshold: float = 0.82) -> str | None:
-    """
-    Returns the best-matching merchant name if similarity is above threshold,
-    else None. Checks exact substring first, then sliding-window fuzzy match.
-    """
-    best_name = None
-    best_score = 0.0
-
-    for name in unique_merchants:
-        name_norm = normalise(name)
-
-        # Exact substring match always wins immediately
-        if name_norm in query_norm:
-            return name
-
-        # Sliding-window similarity: compare name against same-length windows in query
-        score = 0.0
-        name_len = len(name_norm)
-        query_len = len(query_norm)
-
-        if query_len >= name_len:
-            for start in range(query_len - name_len + 1):
-                window = query_norm[start:start + name_len]
-                s = SequenceMatcher(None, name_norm, window).ratio()
-                if s > score:
-                    score = s
-        else:
-            # Query is shorter than merchant name — compare directly
-            score = SequenceMatcher(None, name_norm, query_norm).ratio()
-
-        if score > best_score:
-            best_score = score
-            best_name = name
-
-    return best_name if best_score >= threshold else None
-
-def format_description_lines(desc):
-    """Returns (header_line, [subsequent_lines]) — caller handles 🎁 placement."""
-    if not desc:
-        return "", []
-    lines = [l.strip() for l in desc.splitlines() if l.strip()]
-    if not lines:
-        return "", []
-    header = f"**{lines[0]}**"
-    rest = lines[1:]
-    return header, rest
-
-def get_region_for_address(address, postal=""):
-    addr_lower = address.lower()
-    region_order = ["central", "north", "east", "south", "west"]
-    for region in region_order:
-        areas = SG_REGIONS.get(region, [])
-        if any(area in addr_lower for area in areas):
-            return region
-    code = postal.strip() if postal else ""
-    if not code:
-        m = re.search(r"S\((\d{6})\)|(?<!\d)(\d{6})(?!\d)", address)
-        if m:
-            code = m.group(1) or m.group(2)
-    if code and len(code) >= 2:
-        district = code[:2]
-        if district in POSTAL_DISTRICT_REGION:
-            return POSTAL_DISTRICT_REGION[district]
-    return "other"
-
-def extract_search_terms(query):
+def extract_search_terms(query: str):
     q = query.lower()
-    found_phrases = []
+    phrases_found = []
     for phrase in MULTI_WORD_PHRASES:
         if phrase in q:
-            found_phrases.append(phrase)
+            phrases_found.append(phrase)
             q = q.replace(phrase, " ")
 
-    words = re.split(r"[,\s]+", q)
+    words = re.split(r"[\s,]+", q)
     words = [w.strip() for w in words if w.strip() and w not in STOPWORDS]
 
-    area_found = []
-    non_area_terms = []
+    keywords = list(phrases_found)
+    areas = []
+    regions_found = []
+
     for w in words:
-        if w in AREA_KEYWORDS:
-            area_found.append(w)
+        if w in SG_REGIONS:
+            regions_found.append(w)
+        elif w in AREA_KEYWORDS:
+            areas.append(w)
         else:
-            non_area_terms.append(w)
+            keywords.append(w)
 
-    for phrase in found_phrases:
-        parts = phrase.split()
-        if all(p in AREA_KEYWORDS for p in parts):
-            area_found.append(phrase)
-        else:
-            non_area_terms.append(phrase)
+    for r in regions_found:
+        areas.extend(SG_REGIONS[r])
 
-    region_map = {
-        "central":    SG_REGIONS["central"],
-        "north":      SG_REGIONS["north"],
-        "south":      SG_REGIONS["south"],
-        "east":       SG_REGIONS["east"],
-        "west":       SG_REGIONS["west"],
-        "northeast":  SG_REGIONS["north"],
-        "north east": SG_REGIONS["north"],
-    }
-    expanded_areas = []
-    for a in area_found:
-        if a in region_map:
-            expanded_areas.extend(region_map[a])
-        else:
-            expanded_areas.append(a)
+    return keywords, list(set(areas))
 
-    return non_area_terms, expanded_areas
+# ── Fuzzy matching ─────────────────────────────────────────────────────────────
 
-def is_halal_query(query):
+def fuzzy_match_merchant(query_norm: str, merchant_names: list, threshold=0.82):
+    query_norm = normalise(query_norm)
+    best_name, best_score = None, 0.0
+    for name in merchant_names:
+        name_norm = normalise(name)
+        if name_norm in query_norm:
+            return name
+        wlen = len(name_norm.split())
+        qwords = query_norm.split()
+        if len(qwords) < wlen:
+            continue
+        for i in range(len(qwords) - wlen + 1):
+            window = " ".join(qwords[i:i+wlen])
+            score = SequenceMatcher(None, name_norm, window).ratio()
+            if score > best_score:
+                best_score, best_name = score, name
+    return best_name if best_score >= threshold else None
+
+def detect_outlet_query(query: str, merchant_names: list):
+    q_norm = normalise(query)
+    outlet_pattern = re.compile(
+        r"(.+?)\s+outlets?\b(?:\s+in\s+(.+))?$", re.IGNORECASE
+    )
+    m = outlet_pattern.search(q_norm)
+    if not m:
+        return None, None
+    candidate = m.group(1).strip()
+    area_part = m.group(2).strip() if m.group(2) else ""
+    matched = fuzzy_match_merchant(candidate, merchant_names)
+    if not matched:
+        return None, None
+    area_filter = area_part if area_part else ""
+    return matched, area_filter
+
+# ── Region detection ───────────────────────────────────────────────────────────
+
+def get_region_for_address(address: str, postal: str = "") -> str:
+    addr_lower = address.lower()
+    for region in ["central", "north", "east", "south", "west"]:
+        for kw in SG_REGIONS[region]:
+            if kw in addr_lower:
+                return region
+    if postal:
+        try:
+            district = int(str(postal).strip()[:2])
+            return POSTAL_DISTRICT_REGION.get(district, "central")
+        except Exception:
+            pass
+    return "central"
+
+# ── Merchant lookup helpers ────────────────────────────────────────────────────
+
+def find_all_outlets(df, merchant_name: str):
+    return df[df["name"].str.strip().str.lower() == merchant_name.lower()].to_dict("records")
+
+def count_all_outlets(df, merchant_name: str) -> int:
+    return len(find_all_outlets(df, merchant_name))
+
+def is_halal_query(query: str) -> bool:
     return "halal" in query.lower()
 
-def find_merchant_by_name(name):
-    name_lower = name.lower()
-    matches = df[df["name"].str.lower() == name_lower]
-    return matches
+# ── Description formatting ─────────────────────────────────────────────────────
 
-def find_all_outlets(name):
-    name_lower = name.lower()
-    return df[df["name"].str.lower() == name_lower]
+def is_header_line(line: str) -> bool:
+    """True if the line looks like a section header (ALL CAPS ending with ':')."""
+    stripped = line.strip()
+    return bool(stripped) and stripped.endswith(":") and stripped == stripped.upper()
 
-def count_all_outlets(name):
-    return len(find_all_outlets(name))
-
-def detect_outlet_query(query: str):
+def format_description_lines(desc: str):
     """
-    Returns (merchant_name, area_filter) if the query is asking for outlets
-    of a specific merchant, else (None, None).
-    Uses normalised fuzzy matching to handle special characters and typos.
+    Returns a list of (is_header, text) tuples.
+    is_header=True  → render with 🎁 prefix and bold.
+    is_header=False → render as body text (indented).
     """
-    q_norm = normalise(query)
-    if "outlet" not in q_norm:
-        return None, None
+    if not desc:
+        return []
+    lines = [l.strip() for l in desc.splitlines() if l.strip()]
+    if not lines:
+        return []
+    result = []
+    for i, line in enumerate(lines):
+        if i == 0 or is_header_line(line):
+            result.append((True, f"**{line}**"))
+        else:
+            result.append((False, line))
+    return result
 
-    matched_name = fuzzy_match_merchant(q_norm)
-    if not matched_name:
-        return None, None
+# ── Keyword search ─────────────────────────────────────────────────────────────
 
-    area_filter = None
-    area_match = re.search(
-        r"outlets?\s+(?:in|at|near|around)\s+(.+)$", query, re.IGNORECASE
-    )
-    if area_match:
-        area_filter = area_match.group(1).strip()
+def list_merchants_by_keyword(df, keyword_index, keywords, areas, halal_only=False):
+    scores = {}
+    candidate_rows = set()
 
-    return matched_name, area_filter
-
-# ── Scoring-based search ──────────────────────────────────────────────────────
-def list_merchants_by_keyword(keywords, areas, halal_only=False):
     if keywords:
-        kw_scores: dict[int, int] = {}
         for kw in keywords:
-            kw_lower = kw.lower()
-            for idx_kw, indices in keyword_index.items():
-                if kw_lower in idx_kw or idx_kw in kw_lower:
-                    for i in indices:
-                        kw_scores[i] = kw_scores.get(i, 0) + 1
-        candidate_indices = set(kw_scores.keys())
+            for tok, idxs in keyword_index.items():
+                if kw in tok or tok in kw:
+                    candidate_rows.update(idxs)
     else:
-        kw_scores = {i: 0 for i in df.index}
-        candidate_indices = set(df.index.tolist())
+        candidate_rows = set(df.index)
 
-    if areas:
-        area_indices: set[int] = set()
-        for area in areas:
-            area_lower = area.lower()
-            for idx_kw, indices in keyword_index.items():
-                if area_lower in idx_kw or idx_kw in area_lower:
-                    area_indices.update(indices)
-        candidate_indices = candidate_indices & area_indices
+    for idx in candidate_rows:
+        row = df.loc[idx]
+        if halal_only and str(row.get("Halal", "")).strip().lower() != "yes":
+            continue
+        addr = str(row.get("address", "")).lower()
+        if areas:
+            if not any(a in addr for a in areas):
+                continue
+        score = 0
+        for kw in keywords:
+            kw_field = str(row.get("Keywords", "")).lower()
+            desc_field = str(row.get("description", "")).lower()
+            if kw in kw_field:
+                score += 2
+            elif kw in desc_field:
+                score += 1
+        scores[idx] = scores.get(idx, 0) + score
 
-    if not candidate_indices:
-        return [], 0
+    ranked = sorted(scores.items(), key=lambda x: (-x[1], df.loc[x[0], "name"]))
+    seen_names = set()
+    results = []
+    for idx, _ in ranked:
+        name = df.loc[idx, "name"].strip()
+        if name not in seen_names:
+            seen_names.add(name)
+            results.append(df.loc[idx].to_dict())
+        if len(results) >= MAX_RESULTS:
+            break
+    return results
 
-    results = df.loc[sorted(candidate_indices)].copy()
-    if halal_only:
-        results = results[results["Halal"].str.strip().str.lower() == "yes"]
+# ── Formatting helpers ─────────────────────────────────────────────────────────
 
-    if results.empty:
-        return [], 0
-
-    seen: dict[str, dict] = {}
-    for i, row in results.iterrows():
-        name = row["name"]
-        score = kw_scores.get(i, 0)
-        if name not in seen or score > seen[name]["_score"]:
-            seen[name] = {**row.to_dict(), "_score": score}
-
-    ranked = sorted(seen.values(), key=lambda r: (-r["_score"], r["name"]))
-    total = len(ranked)
-    return ranked[:10], total
-
-
-def format_keyword_list(results, total_count):
+def format_keyword_list(results, df):
     if not results:
         return FALLBACK_PROMPTS
-
-    count = min(len(results), 10)
+    count = len(results)
     lines = [f"Here are the top {count} merchants matching your search, ranked by relevance:\n"]
-
-    for row in results:
-        name = row["name"]
-        address = row.get("address", "")
-        postal = row.get("postalC", "")
+    for r in results:
+        name = r.get("name", "").strip()
+        address = r.get("address", "").strip()
+        postal = r.get("postalC", "")
         postal_str = f" S({postal})" if postal else ""
-        raw_desc = row.get("description", "")
-        outlet_count = count_all_outlets(name)
+        raw_desc = r.get("description", "").strip()
 
-        lines.append(f"#### 🏪 {name}")
+        lines.append(f"---\n#### 🏪 {name}")
         lines.append(f"📍 {address}{postal_str}")
 
         if raw_desc:
-            header_line, rest_lines = format_description_lines(raw_desc)
+            parsed = format_description_lines(raw_desc)
             lines.append("")
-            lines.append(f"🎁 {header_line}")
-            for rl in rest_lines:
-                lines.append(f"   {rl}")
+            for is_hdr, text in parsed:
+                if is_hdr:
+                    lines.append(f"🎁 {text}")
+                else:
+                    lines.append(f"   {text}")
 
+        outlet_count = count_all_outlets(df, name)
         if outlet_count > 1:
             lines.append("")
             lines.append(
                 f"ℹ️ This merchant has {outlet_count} outlets in total. "
-                f"Ask me which area you're looking at, or try '*{name} outlets*' to see all locations."
+                f"Ask me which area you're looking at, or try '**{name} outlets**' to see all locations."
             )
 
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    if total_count >= 10:
+    if count >= MAX_RESULTS:
         lines.append(
-            "_Showing top 10 results by relevance — there may be more. "
+            "\n_Showing top 10 results by relevance — there may be more. "
             "Try a more specific search to narrow down!_"
         )
-
     return "\n".join(lines)
 
+def format_outlet_list(outlets, merchant_name, area_filter=""):
+    if not outlets:
+        return f"I do not know of any outlets for **{merchant_name}**."
 
-def format_outlet_list(outlets_df, merchant_name, area_filter=None):
     if area_filter:
-        filtered = outlets_df[
-            outlets_df["address"].str.lower().str.contains(area_filter.lower(), na=False)
-        ]
-        if filtered.empty:
-            note = f"_(No outlets found specifically in {area_filter.title()}. Showing all outlets instead.)_\n\n"
-            filtered = outlets_df
+        filtered = [o for o in outlets if area_filter.lower() in o.get("address","").lower()]
+        if not filtered:
+            note = f"_No outlets found in '{area_filter}'. Showing all outlets instead._\n\n"
+            filtered = outlets
         else:
             note = ""
-            outlets_df = filtered
+            outlets = filtered
     else:
         note = ""
 
-    total = len(outlets_df)
-    lines = [f"Here are the outlets for **{merchant_name}** ({total} found):\n"]
+    # Check if all outlets share the same description
+    descs = [o.get("description","").strip() for o in outlets]
+    shared_desc = descs[0] if len(set(descs)) == 1 and descs[0] else ""
+
+    lines = [f"### 🏪 {merchant_name}"]
+    lines.append(f"_{len(outlets)} outlet(s) found_\n")
+
     if note:
         lines.append(note)
 
-    descs = outlets_df["description"].str.strip().unique()
-    shared_desc = descs[0] if len(descs) == 1 and descs[0] else None
     if shared_desc:
-        header_line, rest_lines = format_description_lines(shared_desc)
-        lines.append(f"🎁 {header_line}")
-        for rl in rest_lines:
-            lines.append(f"   {rl}")
+        parsed = format_description_lines(shared_desc)
+        for is_hdr, text in parsed:
+            if is_hdr:
+                lines.append(f"🎁 {text}")
+            else:
+                lines.append(f"   {text}")
         lines.append("")
 
-    region_buckets: dict[str, list] = {}
-    for _, row in outlets_df.iterrows():
-        region = get_region_for_address(row.get("address", ""), row.get("postalC", ""))
-        region_buckets.setdefault(region, []).append(row)
+    # Group by region
+    region_order = ["central", "north", "east", "south", "west"]
+    region_buckets = {r: [] for r in region_order}
+    for row in outlets:
+        region = get_region_for_address(row.get("address",""), str(row.get("postalC","")))
+        region_buckets[region].append(row)
 
-    region_order = ["central", "north", "east", "west", "south", "other"]
     for region in region_order:
         rows = region_buckets.get(region, [])
         if not rows:
@@ -511,142 +477,179 @@ def format_outlet_list(outlets_df, merchant_name, area_filter=None):
             postal = row.get("postalC", "")
             postal_str = f" S({postal})" if postal else ""
             desc = row.get("description", "").strip()
-            lines.append(f"• {address}{postal_str}")
+
+            lines.append("")                                        # blank line before each outlet
+            lines.append(f"• **{address}{postal_str}**")           # bold address
+
             if desc and not shared_desc:
-                header_line, rest_lines = format_description_lines(desc)
+                parsed = format_description_lines(desc)
                 lines.append("")
-                lines.append(f"  🎁 {header_line}")
-                for rl in rest_lines:
-                    lines.append(f"     {rl}")
+                for is_hdr, text in parsed:
+                    if is_hdr:
+                        lines.append(f"  🎁 {text}")
+                    else:
+                        lines.append(f"     {text}")
 
     return "\n".join(lines)
 
+# ── LLM helpers ────────────────────────────────────────────────────────────────
 
-def safe_llm_call(prompt):
+def build_llm_context(candidates, df):
+    context_rows = []
+    token_count = 0
+    for c in candidates:
+        name = c.get("name","")
+        address = c.get("address","")
+        desc = c.get("description","")
+        entry = f"Merchant: {name}\nAddress: {address}\nDescription: {desc}\n"
+        entry_tokens = count_tokens(entry)
+        if token_count + entry_tokens > MAX_LLM_CONTEXT_TOKENS:
+            break
+        context_rows.append(entry)
+        token_count += entry_tokens
+    return "\n".join(context_rows)
+
+def safe_llm_call(prompt: str) -> str:
     try:
         return get_completion(prompt)
     except Exception as e:
         err = str(e).lower()
-        if any(w in err for w in ("rate", "token", "limit", "quota")):
+        if "rate limit" in err or "token" in err or "quota" in err:
             return FALLBACK_PROMPTS
-        return FALLBACK_PROMPTS
+        raise
 
-# ── Token-budgeted LLM context ────────────────────────────────────────────────
-MAX_LLM_CONTEXT_TOKENS = 1500
+# ── Halal filter ───────────────────────────────────────────────────────────────
 
-def build_llm_context(candidate_names: list[str]) -> str:
-    lines = []
-    running = 0
-    for name in candidate_names:
-        chunk = f"- {name}\n"
-        cost = count_tokens(chunk)
-        if running + cost > MAX_LLM_CONTEXT_TOKENS:
-            break
-        lines.append(chunk)
-        running += cost
-    return "We have the following merchants:\n" + "".join(lines)
+def filter_halal(df):
+    return df[df["Halal"].str.strip().str.lower() == "yes"]
 
-def handle_user_query(query, last_context=None):
-    q = query.lower().strip()
-    q_norm = normalise(query)
-    halal = is_halal_query(q)
+# ── Main query handler ─────────────────────────────────────────────────────────
 
-    # ── List all merchants ────────────────────────────────────────────────────
-    if re.search(r"\b(list|show|all)\b.*\bmerchants?\b", q) and not any(
-        w in q for w in AREA_KEYWORDS
-    ) and not halal:
-        sample = unique_merchants[:10]
-        result = "Here are some of our merchants (A–Z):\n\n"
-        result += "\n".join(f"- {m}" for m in sample)
-        result += "\n\n_Specify a region or category to narrow down, e.g. 'food merchants in Tampines'._"
-        return result, {"keywords": [], "areas": []}
+def handle_user_query(query: str, df, keyword_index, unique_merchants, last_context=None):
+    q_lower = query.lower().strip()
+    halal = is_halal_query(query)
 
-    # ── Outlet listing (fuzzy + special char tolerant) ────────────────────────
-    matched_name, area_filter = detect_outlet_query(query)
-    if matched_name:
-        outlets = find_all_outlets(matched_name)
-        if not outlets.empty:
-            return format_outlet_list(outlets, matched_name, area_filter), {"keywords": [], "areas": []}
+    # ── 1. List all merchants ──────────────────────────────────────────────────
+    if re.search(r"\blist\s+all\b", q_lower) or q_lower in ("all merchants", "all deals"):
+        sample = unique_merchants[:MAX_RESULTS]
+        resp = "Here are the first 10 merchants (A–Z):\n\n"
+        resp += "\n".join(f"• {m}" for m in sample)
+        resp += (
+            "\n\n_There may be more merchants available. "
+            "Try searching by category (e.g. 'Japanese food') or area (e.g. 'Orchard') "
+            "to narrow down results._"
+        )
+        return resp, {"keywords": [], "areas": []}
 
-    # ── Merchant name check (normalised + fuzzy) ──────────────────────────────
-    matched_name = fuzzy_match_merchant(q_norm)
-    if matched_name:
-        rows = find_merchant_by_name(matched_name)
-        if not rows.empty:
-            if len(rows) == 1:
-                row = rows.iloc[0]
-                address = row.get("address", "")
-                postal = row.get("postalC", "")
-                postal_str = f" S({postal})" if postal else ""
-                raw_desc = row.get("description", "")
-                resp = f"✅ Yes, **{matched_name}** is one of our merchants!\n\n📍 {address}{postal_str}"
-                if raw_desc:
-                    header_line, rest_lines = format_description_lines(raw_desc)
-                    resp += f"\n\n🎁 {header_line}"
-                    for rl in rest_lines:
-                        resp += f"\n   {rl}"
-                return resp, {"keywords": [], "areas": []}
-            else:
-                return (
-                    f"✅ Yes, **{matched_name}** is one of our merchants! "
-                    f"They have **{len(rows)} outlets** across Singapore. "
-                    f"Which area are you looking at? Or try '*{matched_name} outlets*' to see all locations.",
-                    {"keywords": [], "areas": []},
-                )
+    # ── 2. Outlet query ────────────────────────────────────────────────────────
+    merchant_name, area_filter = detect_outlet_query(query, unique_merchants)
+    if merchant_name:
+        outlets = find_all_outlets(df, merchant_name)
+        if halal:
+            outlets = [o for o in outlets if str(o.get("Halal","")).strip().lower() == "yes"]
+        return format_outlet_list(outlets, merchant_name, area_filter=area_filter), {"keywords": [], "areas": []}
 
-    # ── Keyword / area search ─────────────────────────────────────────────────
-    keywords, areas = extract_search_terms(q)
+    # ── 3. Merchant name check ─────────────────────────────────────────────────
+    matched = fuzzy_match_merchant(query, unique_merchants)
+    if matched:
+        outlets = find_all_outlets(df, matched)
+        if len(outlets) == 1:
+            o = outlets[0]
+            address = o.get("address","").strip()
+            postal = o.get("postalC","")
+            postal_str = f" S({postal})" if postal else ""
+            raw_desc = o.get("description","").strip()
+            resp = f"Yes, **{matched}** is one of our merchants! 🎉\n\n📍 {address}{postal_str}"
+            if raw_desc:
+                parsed = format_description_lines(raw_desc)
+                for is_hdr, text in parsed:
+                    if is_hdr:
+                        resp += f"\n\n🎁 {text}"
+                    else:
+                        resp += f"\n   {text}"
+            return resp, {"keywords": [], "areas": []}
+        else:
+            return (
+                f"Yes, **{matched}** is one of our merchants with **{len(outlets)} outlets**! 🎉\n\n"
+                f"Which area are you in? Or try '**{matched} outlets**' to see all locations."
+            ), {"keywords": [], "areas": []}
 
+    # ── 4. Keyword / area search ───────────────────────────────────────────────
+    keywords, areas = extract_search_terms(query)
+
+    # Inherit last context if current query has no keywords/areas
     if not keywords and not areas and last_context:
         keywords = last_context.get("keywords", [])
         areas = last_context.get("areas", [])
 
     if keywords or areas or halal:
-        results, total = list_merchants_by_keyword(keywords, areas, halal_only=halal)
-        if results:
-            return format_keyword_list(results, total), {"keywords": keywords, "areas": areas}
-        else:
-            return FALLBACK_PROMPTS, {"keywords": keywords, "areas": areas}
+        working_df = filter_halal(df) if halal else df
+        results = list_merchants_by_keyword(working_df, keyword_index, keywords, areas, halal_only=halal)
+        return format_keyword_list(results, df), {"keywords": keywords, "areas": areas}
 
-    # ── LLM fallback (token-budgeted) ─────────────────────────────────────────
-    kw_candidates, _ = list_merchants_by_keyword(keywords, [], halal_only=False)
-    candidate_names = [r["name"] for r in kw_candidates] if kw_candidates else unique_merchants
+    # ── 5. LLM fallback ────────────────────────────────────────────────────────
+    kw_fallback, area_fallback = extract_search_terms(query)
+    candidates = list_merchants_by_keyword(df, keyword_index, kw_fallback, area_fallback)
+    if not candidates:
+        candidates = df.sample(min(20, len(df))).to_dict("records")
 
-    context = build_llm_context(candidate_names)
+    context = build_llm_context(candidates, df)
     prompt = (
-        f"You are a helpful merchant chatbot. Answer based only on this information:\n\n"
-        f"{context}\n\n"
+        f"You are a helpful assistant for a merchant deals directory.\n"
+        f"Answer the user's question using only the merchant data below.\n"
+        f"Do not reveal Halal status or Keywords unless the user asks.\n\n"
+        f"Merchant data:\n{context}\n\n"
         f"User question: {query}\n\n"
-        f"If you do not know, say 'I do not know'."
+        f"Answer:"
     )
-    return safe_llm_call(prompt), {"keywords": [], "areas": []}
+    answer = safe_llm_call(prompt)
+    return answer, {"keywords": kw_fallback, "areas": area_fallback}
 
+# ── Streamlit UI ───────────────────────────────────────────────────────────────
 
-# ── Session state ─────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Merchant Deals Chatbot", page_icon="🛍️")
+st.title("🛍️ Merchant Deals Chatbot")
+st.caption("Ask me about merchant deals, categories, or locations!")
+
+st.markdown("""
+<style>
+    .stChatMessage { max-width: 100% !important; }
+    .stMarkdown p { white-space: pre-wrap; }
+</style>
+""", unsafe_allow_html=True)
+
+# Load data
+df = load_data()
+keyword_index = build_keyword_index(df)
+unique_merchants = get_unique_merchants(df)
+
+# Session state init
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": WELCOME_MESSAGE}
-    ]
+    st.session_state.messages = [{"role": "assistant", "content": WELCOME_MESSAGE}]
 if "last_search_context" not in st.session_state:
     st.session_state.last_search_context = None
 
-# ── Chat display ──────────────────────────────────────────────────────────────
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Render chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# ── Chat input ────────────────────────────────────────────────────────────────
-if prompt := st.chat_input("Ask me about our merchants..."):
+# Handle new input
+if prompt := st.chat_input("Ask about merchants, deals, or locations..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
+        with st.spinner("Searching..."):
             response, new_context = handle_user_query(
-                prompt, last_context=st.session_state.last_search_context
+                prompt, df, keyword_index, unique_merchants,
+                last_context=st.session_state.last_search_context
             )
-            st.session_state.last_search_context = new_context
+            if new_context["keywords"] or new_context["areas"]:
+                st.session_state.last_search_context = new_context
+            else:
+                st.session_state.last_search_context = None
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
