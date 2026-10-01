@@ -462,7 +462,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index, last_context
         total = len(unique_merchants)
         first_10 = unique_merchants[:10]
         lines = [
-            f"We have **{total} merchants** in our programme. Here are the first 10 (A–Z):\n"
+            f"Here are the first 10 merchants listed in alphabetical order (A–Z):\n"
         ]
         for i, name in enumerate(first_10, 1):
             lines.append(f"**{i}. {name}**")
