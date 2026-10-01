@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+from difflib import SequenceMatcher
 from helper_functions.llm import get_completion, get_completion_by_messages, count_tokens
 from helper_functions.utility import check_password
 
@@ -221,15 +222,48 @@ unique_merchants = sorted(df["name"].dropna().unique().tolist())
 # ── Helper functions ──────────────────────────────────────────────────────────
 
 def normalise(text: str) -> str:
-    """Lowercase, collapse whitespace, strip punctuation for fuzzy matching."""
+    """Lowercase, replace & with 'and', strip punctuation, collapse whitespace."""
     text = text.lower()
-    # Replace & with "and" so "Fish & Co" == "fish and co"
     text = text.replace("&", "and")
-    # Remove punctuation except spaces
     text = re.sub(r"[^\w\s]", "", text)
-    # Collapse multiple spaces
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
+def fuzzy_match_merchant(query_norm: str, threshold: float = 0.82) -> str | None:
+    """
+    Returns the best-matching merchant name if similarity is above threshold,
+    else None. Checks exact substring first, then sliding-window fuzzy match.
+    """
+    best_name = None
+    best_score = 0.0
+
+    for name in unique_merchants:
+        name_norm = normalise(name)
+
+        # Exact substring match always wins immediately
+        if name_norm in query_norm:
+            return name
+
+        # Sliding-window similarity: compare name against same-length windows in query
+        score = 0.0
+        name_len = len(name_norm)
+        query_len = len(query_norm)
+
+        if query_len >= name_len:
+            for start in range(query_len - name_len + 1):
+                window = query_norm[start:start + name_len]
+                s = SequenceMatcher(None, name_norm, window).ratio()
+                if s > score:
+                    score = s
+        else:
+            # Query is shorter than merchant name — compare directly
+            score = SequenceMatcher(None, name_norm, query_norm).ratio()
+
+        if score > best_score:
+            best_score = score
+            best_name = name
+
+    return best_name if best_score >= threshold else None
 
 def format_description_lines(desc):
     """Returns (header_line, [subsequent_lines]) — caller handles 🎁 placement."""
@@ -319,36 +353,20 @@ def find_all_outlets(name):
 def count_all_outlets(name):
     return len(find_all_outlets(name))
 
-# ── Outlet detection: robust to special characters like & ────────────────────
 def detect_outlet_query(query: str):
     """
     Returns (merchant_name, area_filter) if the query is asking for outlets
     of a specific merchant, else (None, None).
-
-    Handles names with special characters like '&', '.', '-'.
-    Strategy: check if any known merchant name (normalised) appears in the
-    normalised query AND the query contains the word 'outlet(s)'.
+    Uses normalised fuzzy matching to handle special characters and typos.
     """
     q_norm = normalise(query)
     if "outlet" not in q_norm:
         return None, None
 
-    # Remove the word "outlets" / "outlet" and trailing area phrase from normalised query
-    # to isolate the merchant name portion
-    # Try to match each known merchant name against the normalised query
-    best_match = None
-    best_len = 0
-    for name in unique_merchants:
-        name_norm = normalise(name)
-        if name_norm in q_norm:
-            if len(name_norm) > best_len:
-                best_match = name
-                best_len = len(name_norm)
-
-    if not best_match:
+    matched_name = fuzzy_match_merchant(q_norm)
+    if not matched_name:
         return None, None
 
-    # Extract area filter: text after "outlets" / "outlet" in the original query
     area_filter = None
     area_match = re.search(
         r"outlets?\s+(?:in|at|near|around)\s+(.+)$", query, re.IGNORECASE
@@ -356,8 +374,7 @@ def detect_outlet_query(query: str):
     if area_match:
         area_filter = area_match.group(1).strip()
 
-    return best_match, area_filter
-
+    return matched_name, area_filter
 
 # ── Scoring-based search ──────────────────────────────────────────────────────
 def list_merchants_by_keyword(keywords, areas, halal_only=False):
@@ -544,39 +561,38 @@ def handle_user_query(query, last_context=None):
         result += "\n\n_Specify a region or category to narrow down, e.g. 'food merchants in Tampines'._"
         return result, {"keywords": [], "areas": []}
 
-    # ── Outlet listing (robust to special chars like &) ───────────────────────
+    # ── Outlet listing (fuzzy + special char tolerant) ────────────────────────
     matched_name, area_filter = detect_outlet_query(query)
     if matched_name:
         outlets = find_all_outlets(matched_name)
         if not outlets.empty:
             return format_outlet_list(outlets, matched_name, area_filter), {"keywords": [], "areas": []}
 
-    # ── Merchant name check (normalised comparison) ───────────────────────────
-    for name in unique_merchants:
-        name_norm = normalise(name)
-        if name_norm in q_norm:
-            rows = find_merchant_by_name(name)
-            if not rows.empty:
-                if len(rows) == 1:
-                    row = rows.iloc[0]
-                    address = row.get("address", "")
-                    postal = row.get("postalC", "")
-                    postal_str = f" S({postal})" if postal else ""
-                    raw_desc = row.get("description", "")
-                    resp = f"✅ Yes, **{name}** is one of our merchants!\n\n📍 {address}{postal_str}"
-                    if raw_desc:
-                        header_line, rest_lines = format_description_lines(raw_desc)
-                        resp += f"\n\n🎁 {header_line}"
-                        for rl in rest_lines:
-                            resp += f"\n   {rl}"
-                    return resp, {"keywords": [], "areas": []}
-                else:
-                    return (
-                        f"✅ Yes, **{name}** is one of our merchants! "
-                        f"They have **{len(rows)} outlets** across Singapore. "
-                        f"Which area are you looking at? Or try '*{name} outlets*' to see all locations.",
-                        {"keywords": [], "areas": []},
-                    )
+    # ── Merchant name check (normalised + fuzzy) ──────────────────────────────
+    matched_name = fuzzy_match_merchant(q_norm)
+    if matched_name:
+        rows = find_merchant_by_name(matched_name)
+        if not rows.empty:
+            if len(rows) == 1:
+                row = rows.iloc[0]
+                address = row.get("address", "")
+                postal = row.get("postalC", "")
+                postal_str = f" S({postal})" if postal else ""
+                raw_desc = row.get("description", "")
+                resp = f"✅ Yes, **{matched_name}** is one of our merchants!\n\n📍 {address}{postal_str}"
+                if raw_desc:
+                    header_line, rest_lines = format_description_lines(raw_desc)
+                    resp += f"\n\n🎁 {header_line}"
+                    for rl in rest_lines:
+                        resp += f"\n   {rl}"
+                return resp, {"keywords": [], "areas": []}
+            else:
+                return (
+                    f"✅ Yes, **{matched_name}** is one of our merchants! "
+                    f"They have **{len(rows)} outlets** across Singapore. "
+                    f"Which area are you looking at? Or try '*{matched_name} outlets*' to see all locations.",
+                    {"keywords": [], "areas": []},
+                )
 
     # ── Keyword / area search ─────────────────────────────────────────────────
     keywords, areas = extract_search_terms(q)
