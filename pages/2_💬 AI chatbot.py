@@ -67,6 +67,7 @@ AREA_KEYWORDS = {
     "buangkok", "compassvale", "rivervale", "fernvale", "anchorvale",
     "balestier", "geylang", "ubi", "macpherson", "tai seng", "bartley",
     "upper changi", "expo", "changi", "loyang", "whampoa",
+    "telok blangah", "west coast",
 }
 
 # ── Region → list of area keywords ───────────────────────────────────────────
@@ -110,9 +111,8 @@ SG_REGIONS = {
         "king albert park", "sixth avenue", "tan kah kee",
     ],
     "south": [
-        "harbourfront", "vivocity", "labrador park", "sentosa",
-        "haw par villa", "pasir panjang", "telok ayer", "tanjong pagar",
-        "chinatown", "outram", "tiong bahru", "redhill",
+        "harbourfront", "vivocity", "sentosa", "labrador park",
+        "pasir panjang", "west coast", "telok blangah",
     ],
 }
 
@@ -124,6 +124,39 @@ REGION_DISPLAY = {
     "east": "🌅 East",
     "west": "🌇 West",
     "south": "⚓ South",
+    "other": "📍 Other",
+}
+
+# ── Postal district → region fallback ────────────────────────────────────────
+POSTAL_DISTRICT_REGION = {
+    # Central
+    "01": "central", "02": "central", "03": "central", "04": "central",
+    "05": "central", "06": "central", "07": "central", "08": "central",
+    "09": "central", "10": "central", "11": "central", "12": "central",
+    "13": "central", "14": "central", "15": "central", "16": "central",
+    "17": "central", "18": "central", "19": "central", "20": "central",
+    "21": "central", "22": "central", "23": "central",
+    # West
+    "60": "west", "61": "west", "62": "west", "63": "west", "64": "west",
+    "65": "west", "66": "west", "67": "west", "68": "west", "69": "west",
+    "70": "west", "71": "west",
+    # North
+    "72": "north", "73": "north", "75": "north", "76": "north",
+    "77": "north", "78": "north",
+    # North East
+    "53": "north east", "54": "north east", "55": "north east",
+    "56": "north east", "57": "north east",
+    "79": "north east", "80": "north east",
+    # East
+    "34": "east", "35": "east", "36": "east", "37": "east",
+    "38": "east", "39": "east", "40": "east", "41": "east",
+    "42": "east", "43": "east", "44": "east", "45": "east",
+    "46": "east", "47": "east", "48": "east",
+    "49": "east", "50": "east", "51": "east", "52": "east",
+    # South
+    "24": "south", "25": "south", "26": "south", "27": "south",
+    "28": "south", "29": "south", "30": "south",
+    "31": "south", "32": "south", "33": "south",
 }
 
 FALLBACK_PROMPTS = (
@@ -192,34 +225,35 @@ def is_deal_valid(row):
 # ── Assign a region label to an address string ───────────────────────────────
 def get_region_for_address(address):
     addr_lower = address.lower()
+
+    # 1. Keyword matching
     for region, areas in SG_REGIONS.items():
-        if region in ("northeast",):  # skip duplicate alias
+        if region == "northeast":  # skip duplicate alias
             continue
         if any(area in addr_lower for area in areas):
             return region
+
+    # 2. Postal code fallback — extract S(XXXXXX) or bare 6-digit number
+    postal_match = re.search(r"S\((\d{6})\)|(?<!\d)(\d{6})(?!\d)", address)
+    if postal_match:
+        postal = postal_match.group(1) or postal_match.group(2)
+        district = postal[:2]
+        if district in POSTAL_DISTRICT_REGION:
+            return POSTAL_DISTRICT_REGION[district]
+
     return "other"
 
 
 # ── Format description text into readable bullet points ──────────────────────
 def format_description(desc):
-    """
-    Formats a description string for clean display.
-    If the description contains newlines (multi-line privilege text),
-    renders the first line as a bold header and subsequent lines as bullet points.
-    """
     if not desc:
         return ""
-
     lines = [l.strip() for l in desc.splitlines() if l.strip()]
-
     if len(lines) <= 1:
-        return desc  # Single-line: return as-is
-
-    # First line = bold header (e.g. "PASSION MEMBERSHIP PRIVILEGES:")
+        return desc
     result = [f"**{lines[0]}**"]
     for line in lines[1:]:
         result.append(f"  - {line}")
-
     return "\n".join(result)
 
 
@@ -228,19 +262,16 @@ def extract_search_terms(query):
     q_lower = query.lower()
     areas = []
 
-    # Detect region names → expand to area lists
     for region, sub_areas in SG_REGIONS.items():
         if region in q_lower:
             for a in sub_areas:
                 if a not in areas:
                     areas.append(a)
 
-    # Detect specific area keywords
     for area in sorted(AREA_KEYWORDS, key=len, reverse=True):
         if area in q_lower and area not in areas:
             areas.append(area)
 
-    # ── Multi-word phrase detection (before splitting) ────────────────────────
     remaining = q_lower
     matched_phrases = []
     for phrase in sorted(MULTI_WORD_PHRASES, key=len, reverse=True):
@@ -248,7 +279,6 @@ def extract_search_terms(query):
             matched_phrases.append(phrase)
             remaining = remaining.replace(phrase, " ")
 
-    # ── Single-word keyword extraction from what's left ───────────────────────
     area_words = set(w for a in areas for w in a.split())
     single_words = [
         w for w in re.findall(r"\b\w+\b", remaining)
@@ -382,11 +412,11 @@ def format_outlet_list(merchant_name, outlets, area_filter=None):
         else:
             area_note = "_No outlets found in that area — showing all outlets instead._\n\n"
 
-    # ── Check if all outlets share the same description ───────────────────────
+    # Check if all outlets share the same description
     descriptions = [row.get("description", "").strip() for row in display_outlets]
     all_same_desc = len(set(descriptions)) == 1 and descriptions[0]
 
-    # ── Group outlets by region ───────────────────────────────────────────────
+    # Group outlets by region
     region_order = ["central", "north", "north east", "east", "west", "south", "other"]
     grouped = {r: [] for r in region_order}
 
@@ -396,12 +426,12 @@ def format_outlet_list(merchant_name, outlets, area_filter=None):
 
     lines = [f"{area_note}Here are the outlets for **{merchant_name}** ({len(display_outlets)} found):\n"]
 
-    # ── Show shared description ONCE at the top ───────────────────────────────
+    # Show shared description ONCE at the top
     if all_same_desc:
         lines.append(f"🎁 {format_description(descriptions[0])}\n")
         lines.append("---\n")
 
-    # ── List outlets by region (address only if desc already shown) ───────────
+    # List outlets by region
     for region in region_order:
         rows_in_region = grouped[region]
         if not rows_in_region:
@@ -424,10 +454,6 @@ def format_outlet_list(merchant_name, outlets, area_filter=None):
 
 
 def format_keyword_list(matched_rows, data, halal_only=False):
-    """
-    Lists one address per merchant (the first in the CSV).
-    Adds a disclaimer if the merchant has more outlets.
-    """
     if not matched_rows:
         return (
             "I'm sorry, I do not know of any active merchants matching your search in our programme.\n\n"
@@ -450,22 +476,21 @@ def format_keyword_list(matched_rows, data, halal_only=False):
         postal_str = f" S({postal})" if postal else ""
         desc = row.get("description", "").strip()
 
-        # Count total outlets for this merchant
         total_outlets = count_all_outlets(name, data)
 
         lines.append(f"**{i}. {name}**")
         lines.append(f"   📍 {address}{postal_str}")
         if desc:
             lines.append(f"   🎁 {format_description(desc)}")
+            lines.append("")  # blank line between description and disclaimer
 
-        # Disclaimer if merchant has more than 1 outlet
         if total_outlets > 1:
             lines.append(
                 f"   ℹ️ _This merchant has **{total_outlets} outlets** in total. "
                 f"Ask me which area you're looking at, or try '{name} outlets' to see all locations._"
             )
 
-        lines.append("")
+        lines.append("")  # blank line between merchants
 
     if len(matched_rows) == 10:
         lines.append("_Showing first 10 results. Try a more specific search to narrow down!_")
@@ -488,17 +513,14 @@ def safe_llm_call(prompt_text):
 def handle_user_query(query, data, unique_merchants, keyword_index, last_context=None):
     halal_only = is_halal_query(query)
 
-    # Reset context on clearly new/unrelated query types
     if is_list_all_query(query) or is_outlet_query(query) or is_merchant_query(query):
         st.session_state.last_search_context = {"keywords": [], "areas": []}
 
-    # 1. List all merchants → show first 10 A–Z + region prompt
+    # 1. List all merchants
     if is_list_all_query(query) and not halal_only:
         total = len(unique_merchants)
         first_10 = unique_merchants[:10]
-        lines = [
-            f"We have **{total} merchants** in our programme. Here are the first 10 (A–Z):\n"
-        ]
+        lines = [f"We have **{total} merchants** in our programme. Here are the first 10 (A–Z):\n"]
         for i, name in enumerate(first_10, 1):
             lines.append(f"**{i}. {name}**")
         lines.append(
