@@ -3,7 +3,7 @@ import pandas as pd
 import re
 import os
 from datetime import datetime
-from helper_functions.llm import get_completion_by_messages
+from helper_functions.llm import get_completion, get_completion_by_messages, count_tokens
 from helper_functions.utility import check_password
 
 if not check_password():
@@ -31,7 +31,7 @@ STOPWORDS = {
     "halal", "food",
 }
 
-# ── Singapore area keywords (MRT / neighbourhood names) ──────────────────────
+# ── Singapore area keywords ───────────────────────────────────────────────────
 AREA_KEYWORDS = {
     "orchard", "somerset", "dhoby ghaut", "city hall", "raffles place",
     "marina bay", "bugis", "lavender", "kallang", "tampines", "bedok",
@@ -113,7 +113,7 @@ FALLBACK_PROMPTS = (
     "_Try one of the above to get started!_"
 )
 
-# ── Data loading ─────────────────────────────────────────────────────────────
+# ── Data loading ──────────────────────────────────────────────────────────────
 @st.cache_data
 def load_and_process_database():
     try:
@@ -123,11 +123,9 @@ def load_and_process_database():
             if df[col].dtype == object:
                 df[col] = df[col].fillna("").astype(str).str.strip()
 
-        # Pre-filter to valid (active) deals only
         valid_rows = [row for row in df.to_dict(orient="records") if is_deal_valid(row)]
         data = valid_rows
 
-        # Deduplicate merchants by name (from valid rows only)
         seen_names = set()
         unique_merchants = []
         for row in data:
@@ -137,7 +135,6 @@ def load_and_process_database():
                 unique_merchants.append(name)
         unique_merchants.sort()
 
-        # Build keyword index from valid rows only
         keyword_index = {}
         for idx, row in enumerate(data):
             raw_keywords = row.get("Keywords", "")
@@ -166,7 +163,7 @@ def is_deal_valid(row):
             return start <= today <= end
         except ValueError:
             continue
-    return True  # Include if dates unparseable
+    return True
 
 
 # ── Search helpers ────────────────────────────────────────────────────────────
@@ -174,19 +171,16 @@ def extract_search_terms(query):
     q_lower = query.lower()
     areas = []
 
-    # 1. Check for region phrases first (multi-word, e.g. "north east")
     for region, sub_areas in SG_REGIONS.items():
         if region in q_lower:
             for a in sub_areas:
                 if a not in areas:
                     areas.append(a)
 
-    # 2. Check for multi-word area names (e.g. "raffles place", "ang mo kio")
     for area in sorted(AREA_KEYWORDS, key=len, reverse=True):
         if area in q_lower and area not in areas:
             areas.append(area)
 
-    # 3. Keywords = words not in stopwords, not an area keyword, length > 2
     words = re.findall(r"\b\w+\b", q_lower)
     area_words = set(w for a in areas for w in a.split())
     keywords = [
@@ -220,7 +214,6 @@ def find_merchant_by_name(query, unique_merchants):
     for name in unique_merchants:
         if name.lower() in q:
             return name
-    # Partial match
     for name in unique_merchants:
         parts = name.lower().split()
         if any(p in q for p in parts if len(p) > 3):
@@ -359,9 +352,9 @@ def format_keyword_list(matched_rows, halal_only=False):
 
 
 # ── LLM wrapper ───────────────────────────────────────────────────────────────
-def safe_llm_call(messages):
+def safe_llm_call(prompt_text):
     try:
-        return get_completion_by_messages(messages)
+        return get_completion(prompt_text)
     except Exception as e:
         err = str(e).lower()
         if any(k in err for k in ["ratelimit", "rate_limit", "429", "token", "context_length", "maximum context"]):
@@ -376,7 +369,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
     # 1. List all merchants → show first 10 A–Z + region prompt
     if is_list_all_query(query) and not halal_only:
         total = len(unique_merchants)
-        first_10 = unique_merchants[:10]  # already sorted A–Z
+        first_10 = unique_merchants[:10]
         lines = [
             f"We have **{total} merchants** in our programme. Here are the first 10 (A–Z):\n"
         ]
@@ -390,7 +383,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
         )
         return "\n".join(lines)
 
-    # 2. Outlet query — find merchant name first
+    # 2. Outlet query
     if is_outlet_query(query):
         merchant_name = find_merchant_by_name(query, unique_merchants)
         if merchant_name:
@@ -435,7 +428,7 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
             "You can also ask: 'Show me food merchants' to browse what's available."
         )
 
-    # 4. Halal-only query (with or without keyword)
+    # 4. Halal-only query
     if halal_only:
         search_terms, area_found = extract_search_terms(query)
         matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index, halal_only=True)
@@ -447,8 +440,24 @@ def handle_user_query(query, data, unique_merchants, keyword_index):
         matched = list_merchants_by_keyword(search_terms, area_found, data, keyword_index)
         return format_keyword_list(matched)
 
-    # 6. Fallback
-    return FALLBACK_PROMPTS
+    # 6. Fallback → LLM for complex/ambiguous queries
+    merchant_summary = "\n".join(
+        f"- {r['name']}: {r.get('description', '')}" for r in data[:30]
+    )
+    # Guard token count before sending to LLM
+    if count_tokens(merchant_summary) > 3000:
+        merchant_summary = "\n".join(
+            f"- {r['name']}: {r.get('description', '')}" for r in data[:15]
+        )
+
+    prompt = (
+        f"You are a helpful assistant for a merchant rewards programme in Singapore.\n"
+        f"Here are some active merchants and their deals:\n{merchant_summary}\n\n"
+        f"User asked: {query}\n\n"
+        f"Answer helpfully and concisely. If the answer is not in the merchant list, "
+        f"say you do not know and suggest they try searching by category or location."
+    )
+    return safe_llm_call(prompt)
 
 
 # ── Streamlit UI ──────────────────────────────────────────────────────────────
@@ -494,23 +503,7 @@ if prompt := st.chat_input("Ask me about merchants, deals, or locations..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Looking that up..."):
-            # Build enriched query from last 5 user messages (deduplicated)
-            recent = st.session_state.messages[:-1][-5:]
-            context_text = " ".join(
-                m["content"] for m in recent if m["role"] == "user"
-            )
-            raw_enriched = f"{context_text} {prompt}".strip() if context_text else prompt
-
-            # Deduplicate words in enriched query
-            seen_words = set()
-            deduped_words = []
-            for word in raw_enriched.split():
-                if word.lower() not in seen_words:
-                    seen_words.add(word.lower())
-                    deduped_words.append(word)
-            enriched_query = " ".join(deduped_words)
-
-            response = handle_user_query(enriched_query, data, unique_merchants, keyword_index)
+            response = handle_user_query(prompt, data, unique_merchants, keyword_index)
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
