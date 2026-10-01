@@ -217,6 +217,8 @@ STOPWORDS = {
     "merchant","merchants","deal","deals","offer","offers","promo","promos",
     "promotion","promotions","discount","discounts","voucher","vouchers",
     "available","singapore","sg",
+    # FIX 2: add "halal" so it doesn't leak into keyword search
+    "halal",
 }
 
 def normalise(text: str) -> str:
@@ -318,16 +320,10 @@ def is_halal_query(query: str) -> bool:
 # ── Description formatting ─────────────────────────────────────────────────────
 
 def is_header_line(line: str) -> bool:
-    """True if the line looks like a section header (ALL CAPS ending with ':')."""
     stripped = line.strip()
     return bool(stripped) and stripped.endswith(":") and stripped == stripped.upper()
 
 def format_description_lines(desc: str):
-    """
-    Returns a list of (is_header, text) tuples.
-    is_header=True  → render with 🎁 prefix and bold.
-    is_header=False → render as body text (indented).
-    """
     if not desc:
         return []
     lines = [l.strip() for l in desc.splitlines() if l.strip()]
@@ -344,6 +340,10 @@ def format_description_lines(desc: str):
 # ── Keyword search ─────────────────────────────────────────────────────────────
 
 def list_merchants_by_keyword(df, keyword_index, keywords, areas, halal_only=False):
+    """
+    Always receives the FULL df (with original contiguous indices matching keyword_index).
+    halal_only filtering is applied row-by-row inside this function.
+    """
     scores = {}
     candidate_rows = set()
 
@@ -356,6 +356,9 @@ def list_merchants_by_keyword(df, keyword_index, keywords, areas, halal_only=Fal
         candidate_rows = set(df.index)
 
     for idx in candidate_rows:
+        # FIX 1: guard against stale indices (safety net)
+        if idx not in df.index:
+            continue
         row = df.loc[idx]
         if halal_only and str(row.get("Halal", "")).strip().lower() != "yes":
             continue
@@ -399,7 +402,6 @@ def format_keyword_list(results, df):
         postal_str = f" S({postal})" if postal else ""
         raw_desc = r.get("description", "").strip()
 
-        # FIX 1: Downsized heading from #### to ##### for less visual weight
         lines.append(f"---\n##### 🏪 {name}")
         lines.append(f"📍 {address}{postal_str}")
 
@@ -415,7 +417,6 @@ def format_keyword_list(results, df):
         outlet_count = count_all_outlets(df, name)
         if outlet_count > 1:
             lines.append("")
-            # FIX 3: Italicised disclaimer so it's visually de-emphasised
             lines.append(
                 f"_ℹ️ This merchant has {outlet_count} outlets in total. "
                 f"Ask me which area you're looking at, or try '**{name} outlets**' to see all locations._"
@@ -443,7 +444,6 @@ def format_outlet_list(outlets, merchant_name, area_filter=""):
     else:
         note = ""
 
-    # Check if all outlets share the same description
     descs = [o.get("description","").strip() for o in outlets]
     shared_desc = descs[0] if len(set(descs)) == 1 and descs[0] else ""
 
@@ -462,7 +462,6 @@ def format_outlet_list(outlets, merchant_name, area_filter=""):
                 lines.append(f"   {text}")
         lines.append("")
 
-    # Group by region
     region_order = ["central", "north", "east", "south", "west"]
     region_buckets = {r: [] for r in region_order}
     for row in outlets:
@@ -519,11 +518,6 @@ def safe_llm_call(prompt: str) -> str:
         if "rate limit" in err or "token" in err or "quota" in err:
             return FALLBACK_PROMPTS
         raise
-
-# ── Halal filter ───────────────────────────────────────────────────────────────
-
-def filter_halal(df):
-    return df[df["Halal"].str.strip().str.lower() == "yes"]
 
 # ── Main query handler ─────────────────────────────────────────────────────────
 
@@ -585,8 +579,8 @@ def handle_user_query(query: str, df, keyword_index, unique_merchants, last_cont
         areas = last_context.get("areas", [])
 
     if keywords or areas or halal:
-        working_df = filter_halal(df) if halal else df
-        results = list_merchants_by_keyword(working_df, keyword_index, keywords, areas, halal_only=halal)
+        # FIX 1: always pass the full df — halal_only flag handles filtering internally
+        results = list_merchants_by_keyword(df, keyword_index, keywords, areas, halal_only=halal)
         return format_keyword_list(results, df), {"keywords": keywords, "areas": areas}
 
     # ── 5. LLM fallback ────────────────────────────────────────────────────────
