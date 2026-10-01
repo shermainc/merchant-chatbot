@@ -33,16 +33,18 @@ WELCOME_MESSAGE = """
 👋 Hi! I'm your Merchant AI Assistant. Here's what I can help you with:
 
 - 🔍 **Find merchants by category or keyword**
-  *e.g. bubble tea , fast food , cake stores , halal food, spa *
+  e.g. bubble tea , fast food , cake stores , halal food, fried chicken, spa 
 
 - 📍 **Find merchants by area or region**
-  *e.g. "food in Tampines"*
+  e.g. food in Tampines , Playmade stores in the East
 
 - 🏪 **Check if a merchant is in our list**
-  *e.g. "Is Playmade our merchant?"*
+  e.g. Is Tuk Tuk Cha our merchant?
 
 - 📋 **See all outlets for a merchant**
-  *e.g. "Old Chang Kee outlets", "Skechers store" ,"Playmade stores in the east"*
+  e.g. Old Chang Kee outlets , Skechers store east
+  
+⚠️ *This assistant is powered by AI and is intended as a helpful guide. While I do my best to provide accurate information, responses may occasionally be incomplete or imprecise. Please verify important details directly with the merchant before making any decisions.
 
 What would you like to know?
 """
