@@ -581,7 +581,7 @@ if "messages" not in st.session_state:
         "role": "assistant",
         "content": (
             f"Hi there! 👋 I can help you find merchants and deals.\n\n"
-            f"We have **{len(unique_merchants)} merchants** in our programme. Try asking:\n"
+            f"Try asking:\n"
             "🔍 'Show me food deals' or 'spa merchants'\n"
             "📍 'Restaurants near Orchard' or 'deals in Tampines'\n"
             "🥩 'List me halal food' or 'halal merchants'\n"
