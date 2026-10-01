@@ -44,7 +44,7 @@ WELCOME_MESSAGE = """
 - 📋 **See all outlets for a merchant**
   e.g. Old Chang Kee outlets , Skechers store east
   
-⚠️ *This assistant is powered by AI and is intended as a helpful guide. While I do my best to provide accurate information, responses may occasionally be incomplete or imprecise. Please verify important details directly with the merchant before making any decisions.
+⚠️ This assistant is powered by AI and is intended as a helpful guide. While I do my best to provide accurate information, responses may occasionally be incomplete or imprecise. Please verify important details directly with the merchant before making any decisions.
 
 What would you like to know?
 """
