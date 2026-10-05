@@ -178,7 +178,6 @@ df = load_data()
 
 # ── Keyword index — Keywords column ONLY ─────────────────────────────────────
 @st.cache_data
-st.write("df loaded, shape:", df.shape)
 def build_keyword_index(df):
     index = {}
     for i, row in df.iterrows():
